@@ -99,6 +99,51 @@ function Log.setup_watch()
   end)
 
   Log.has_watch_setup = true
+
+  Log.make_timer()
+end
+
+function Log.timer_cb()
+  local stat = uv.fs_stat(Log.logfile)
+  if not stat or stat.size < math.floor(Config.options.log.max_size * 1024 * 1024) then
+    return
+  end
+
+  local fd = uv.fs_open(Log.logfile, 'w', tonumber('644', 8))
+  if not fd then
+    return
+  end
+
+  uv.fs_ftruncate(fd, 0)
+  uv.fs_close(fd)
+
+  vim.notify(('(%s): `%s` has been cleared!'):format(MODSTR, Log.logfile), vim.log.levels.INFO)
+end
+
+function Log.make_timer()
+  if Log.timer and Log.timer:is_active() then
+    return
+  end
+
+  Log.timer = uv.new_timer()
+  if not Log.timer then
+    return
+  end
+
+  Log.timer:start(10000, 900000, vim.schedule_wrap(Log.timer_cb))
+
+  local group = vim.api.nvim_create_augroup('project.nvim.log', { clear = false })
+  vim.api.nvim_create_autocmd({ 'VimLeavePre' }, {
+    group = group,
+    callback = function()
+      if not (Log.timer and Log.timer:is_active()) then
+        return
+      end
+
+      Log.timer:stop()
+      Log.timer = nil
+    end,
+  })
 end
 
 ---@param data string
@@ -219,13 +264,6 @@ function Log.init()
     fd = nil
   end
   stat = uv.fs_stat(Log.logfile) ---@type uv.fs_stat.result
-  local max_size = log_cfg.max_size
-  if (stat.size / 1024) / 1024 >= max_size then
-    fd = Log.open('w')
-    uv.fs_ftruncate(fd, 0)
-    uv.fs_close(fd)
-    fd = nil
-  end
 
   fd = Log.open('a')
   local head = ('='):rep(45)
