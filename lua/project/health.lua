@@ -89,7 +89,7 @@ function M.options_check()
       end
 
       local str, warning = Util.format_per_type(type(v), v, nil, constraints)
-      local func = (warning ~= nil and warning) and vim.health.warn or vim.health.ok
+      local func = warning and vim.health.warn or vim.health.ok
       func((' - `%s`: %s'):format(k, str))
     end
   end
@@ -120,9 +120,9 @@ end
 function M.project_check()
   vim.health.start('Current Project')
   local curr, method, last = Api.current_project, Api.current_method, Api.last_project
-  local msg = ('Current project: `%s`\n'):format(curr ~= nil and curr or 'No Current Project')
-  msg = ('%sMethod used: `%s`\n'):format(msg, (method ~= nil and method or 'No method available'))
-  msg = ('%sLast project: `%s`'):format(msg, (last ~= nil and last or 'No Last Project In History'))
+  local msg = ('Current project: `%s`\n'):format(curr and curr or 'No Current Project')
+  msg = ('%sMethod used: `%s`\n'):format(msg, (method and method or 'No method available'))
+  msg = ('%sLast project: `%s`'):format(msg, (last and last or 'No Last Project In History'))
   vim.health.info(msg)
 
   vim.health.start('Detection Methods')

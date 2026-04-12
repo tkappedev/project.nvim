@@ -34,7 +34,9 @@ M.setup = Config.setup
 ---@nodiscard
 function M.current_project(refresh)
   require('project.util').validate({ refresh = { refresh, { 'boolean', 'nil' }, true } })
-  refresh = refresh ~= nil and refresh or false
+  if refresh == nil then
+    refresh = false
+  end
 
   local Log = require('project.util.log')
   if refresh then

@@ -28,7 +28,9 @@ History.session_projects = {} ---@type string[]
 ---@param force? boolean
 function History.clear_historyfile(force)
   Util.validate({ force = { force, { 'boolean', 'nil' }, true } })
-  force = force ~= nil and force or false
+  if force == nil then
+    force = false
+  end
 
   if vim.g.project_historyfile_cleared == 1 then
     Log.info(('(%s.clear_historyfile): Already cleared. Aborting.'):format(MODSTR))
@@ -124,9 +126,15 @@ function History.export_history_json(path, ind, force_name)
     ind = { ind, { 'string', 'number', 'nil' }, true },
     force_name = { force_name, { 'boolean', 'nil' }, true },
   })
-  ind = ind or 2
-  ind = math.floor(tonumber(ind))
-  force_name = force_name ~= nil and force_name or false
+  ind = ind or 2 --[[@as integer]]
+  if force_name == nil then
+    force_name = false
+  end
+  if Util.is_type('string', ind) then
+    ---@cast ind string
+    ind = math.floor(tonumber(ind, 10))
+  end
+
   if vim.g.project_setup ~= 1 then
     return
   end
@@ -213,7 +221,9 @@ function History.import_history_json(path, force_name)
     path = { path, { 'string' } },
     force_name = { force_name, { 'boolean', 'nil' }, true },
   })
-  force_name = force_name ~= nil and force_name or false
+  if force_name == nil then
+    force_name = false
+  end
 
   if vim.g.project_setup ~= 1 then
     return
@@ -317,7 +327,9 @@ function History.delete_project(project, prompt)
     project = { project, { 'string', 'table' } },
     prompt = { prompt, { 'boolean', 'nil' }, true },
   })
-  prompt = prompt ~= nil and prompt or false
+  if prompt == nil then
+    prompt = false
+  end
 
   ---@cast project Project.ActionEntry
   if Util.is_type('table', project) then
@@ -376,7 +388,7 @@ function History.setup_watch()
     return
   end
   event:start(Path.projectpath, {}, function(err, _, events)
-    if err ~= nil or not events.change then
+    if err or not events.change then
       return
     end
     History.recent_projects = nil
@@ -437,7 +449,9 @@ end
 ---@return string[] recents
 function History.get_recent_projects(tilde)
   Util.validate({ tilde = { tilde, { 'boolean', 'nil' }, true } })
-  tilde = tilde ~= nil and tilde or false
+  if tilde == nil then
+    tilde = false
+  end
 
   local tbl = {} ---@type string[]
   if History.recent_projects then

@@ -102,7 +102,7 @@ function M:project_root()
     or not (curr and root)
     or curr ~= root
   then
-    msg = self.options.no_project
+    msg = self.options.no_project --[[@as string]]
   elseif format == 'full_expanded' then
     msg = Util.rstrip('/', vim.fn.fnamemodify(curr, ':p'))
   elseif format == 'full' then
@@ -114,7 +114,7 @@ function M:project_root()
   if self.options.enclose_pair then
     msg = (self.options.enclose_pair[1] and self.options.enclose_pair[1] or '')
       .. msg
-      .. (self.options.enclose_pair[2] and self.options.enclose_pair[2] or '')
+      .. (self.options.enclose_pair[2] and self.options.enclose_pair[2] or '') --[[@as string]]
   end
 
   return msg

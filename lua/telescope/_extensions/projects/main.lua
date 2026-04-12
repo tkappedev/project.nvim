@@ -99,7 +99,7 @@ function M.projects(opts)
   end
 
   local Options = Config.options
-  local scope = Options.scope_chdir == 'win' and 'window' or Options.scope_chdir
+  local scope = Options.scope_chdir == 'win' and 'window' or Options.scope_chdir --[[@as string]]
   Pickers.new(vim.tbl_deep_extend('keep', opts, M.default_opts), {
     prompt_title = ('Select Your Project (%s)'):format(Util.capitalize(scope)),
     results_title = 'Projects',

@@ -28,9 +28,9 @@ local Log = require('project.util.log')
 ---The `project.nvim` API module.
 --- ---
 ---@class Project.API
----@field last_project? string
----@field current_project? string
----@field current_method? string
+---@field current_method string|nil
+---@field current_project string|nil
+---@field last_project string|nil
 local Api = {}
 
 ---@class ProjectRootSwitch

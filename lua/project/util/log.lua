@@ -17,8 +17,10 @@ local Util = require('project.util')
 local Config = require('project.config')
 
 ---@class Project.Log
----@field logfile? string
----@field window? Project.LogWin
+---@field public logfile? string
+---@field public window? Project.LogWin
+---@field private timer uv.uv_timer_t|nil
+---@field public has_watch_setup? boolean
 local Log = {}
 
 ---@param lvl vim.log.levels
@@ -46,11 +48,11 @@ local function gen_log(lvl)
   end
 end
 
-Log.trace = gen_log(TRACE)
-Log.warn = gen_log(WARN)
+Log.debug = gen_log(DEBUG)
 Log.error = gen_log(ERROR)
 Log.info = gen_log(INFO)
-Log.debug = gen_log(DEBUG)
+Log.trace = gen_log(TRACE)
+Log.warn = gen_log(WARN)
 
 ---@return string|nil data
 function Log.read_log()
@@ -66,7 +68,6 @@ function Log.read_log()
     return
   end
 
-  Log.setup_watch()
   local data = uv.fs_read(fd, stat.size, -1)
   return data
 end
@@ -96,6 +97,7 @@ function Log.setup_watch()
 
     Log.read_log()
   end)
+
   Log.has_watch_setup = true
 end
 
@@ -127,7 +129,7 @@ function Log.write(data, lvl)
     }
   -- stylua: ignore end
 
-  local msg = os.date(('%s  ==>  %s%s'):format('%H:%M:%S', PFX[lvl], data))
+  local msg = os.date(('%s  ==>  %s%s'):format('%H:%M:%S', PFX[lvl], data)) --[[@as string]]
   uv.fs_write(fd, msg, -1)
   uv.fs_close(fd)
   return msg
@@ -233,6 +235,7 @@ function Log.init()
       .. os.date(('%s    %s    %s\n'):format(head, '%x  (%H:%M:%S)', head))
   )
 
+  Log.setup_watch()
   Log.create_commands()
 end
 

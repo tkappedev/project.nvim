@@ -202,7 +202,9 @@ function M.capitalize(str, use_dot, triggers)
     return str
   end
 
-  use_dot = use_dot ~= nil and use_dot or false
+  if use_dot == nil then
+    use_dot = false
+  end
   triggers = triggers or { ' ', '' }
   if not vim.list_contains(triggers, ' ') then
     table.insert(triggers, ' ')
@@ -236,9 +238,8 @@ end
 ---
 ---If `data` is `nil`, the function will always return `false`.
 --- ---
----@generic T
----@param t type Any return value the `type()` function would return
----@param data T The data to be type-checked
+---@param t type Any return value the `type()` function would return.
+---@param data any The data to be type-checked.
 ---@return boolean correct_type
 ---@nodiscard
 function M.is_type(t, data)
@@ -311,7 +312,9 @@ function M.is_int(nums, cond)
     nums = { nums, { 'number', 'table' } },
     cond = { cond, { 'boolean', 'nil' }, true },
   })
-  cond = cond ~= nil and cond or true
+  if cond == nil then
+    cond = true
+  end
 
   if M.is_type('number', nums) then
     ---@cast nums number
@@ -411,7 +414,7 @@ function M.is_hidden(path)
 
   ---CREDITS: [u/Some_Derpy_Pineapple](https://www.reddit.com/r/neovim/comments/1nu5ehj/comment/ngyz21m/)
   local FILE_ATTRIBUTE_HIDDEN = 0x2
-  local ffi = nil ---@type nil|ffilib
+  local ffi = nil ---@type ffilib
   if M.mod_exists('ffi') then
     ffi = require('ffi')
     ffi.cdef([[
@@ -508,6 +511,7 @@ function M.lstrip(char, str)
     return str
   end
 
+  ---@cast char string
   if not vim.startswith(str, char) or char:len() > str:len() then
     return str
   end
@@ -651,7 +655,7 @@ function M.format_per_type(t, data, sep, constraints)
     if not M.is_type('table', constraints) then
       return res
     end
-    if constraints ~= nil and vim.list_contains(constraints, data) then
+    if constraints and vim.list_contains(constraints, data) then
       return res
     end
     return res, true

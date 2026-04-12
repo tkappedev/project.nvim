@@ -49,12 +49,12 @@ local complete_types = { ---@diagnostic disable-line:unused-local
 ---|ProjectCmdFun
 
 ---@class Project.Commands.Spec
----@field bang? boolean
+---@field bang boolean|nil
 ---@field callback ProjectCmdFun
----@field complete? CompleteTypes|CompletorFunc
+---@field complete nil|CompleteTypes|CompletorFunc
 ---@field desc string
 ---@field name string
----@field nargs? string|integer
+---@field nargs string|integer|nil
 
 local WARN = vim.log.levels.WARN
 local ERROR = vim.log.levels.ERROR
@@ -86,13 +86,16 @@ function Commands.new(specs)
       complete = { spec.complete, { 'string', 'function', 'nil' }, true },
     })
 
+    local bang = false ---@type boolean
+    if spec.bang ~= nil then
+      bang = spec.bang
+    end
     local name = spec.name
-    local bang = spec.bang ~= nil and spec.bang or false
     local T = { name = name, desc = spec.desc, bang = bang }
     local opts = { desc = spec.desc, bang = bang }
-    if spec.nargs ~= nil then
-      T.nargs = spec.nargs
-      opts.nargs = spec.nargs
+    if spec.nargs then
+      T.nargs = spec.nargs --[[@as string|integer]]
+      opts.nargs = spec.nargs --[[@as string|integer]]
     end
     if spec.complete then
       T.complete = spec.complete
@@ -168,8 +171,9 @@ function Commands.create_user_commands()
       complete = 'file',
       callback = function(ctx)
         if ctx and vim.tbl_isempty(ctx.fargs) then
-          local opts = { prompt = 'Input a valid path to the project:', completion = 'dir' } ---@type vim.ui.input.Opts
-          if ctx.bang ~= nil and ctx.bang then
+          ---@type vim.ui.input.Opts
+          local opts = { prompt = 'Input a valid path to the project:', completion = 'dir' }
+          if ctx.bang then
             local bufnr = vim.api.nvim_get_current_buf()
             opts.default = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ':p:h')
           end
@@ -202,7 +206,7 @@ function Commands.create_user_commands()
       desc = 'Prints out the current configuratiion for `project.nvim`',
       bang = true,
       callback = function(ctx)
-        if ctx and ctx.bang ~= nil and ctx.bang then
+        if ctx and ctx.bang then
           vim.print(Config.get_config())
           return
         end
@@ -247,7 +251,6 @@ function Commands.create_user_commands()
           return
         end
 
-        local force = ctx.bang ~= nil and ctx.bang or false
         local msg
         for _, v in ipairs(ctx.fargs) do
           v = Util.strip({ '"', "'" }, v)
@@ -255,7 +258,7 @@ function Commands.create_user_commands()
           if path:sub(-1) == '/' then
             path = path:sub(1, path:len() - 1)
           end
-          if not (force or vim.list_contains(recent, path) or path ~= '') then
+          if not (ctx.bang or vim.list_contains(recent, path) or path ~= '') then
             msg = ('(:ProjectDelete): Could not delete `%s`, aborting'):format(path)
             Log.error(msg)
             vim.notify(msg, ERROR)

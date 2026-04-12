@@ -132,7 +132,9 @@ M.select = {}
 ---@param bang? boolean
 function M.gen_import_prompt(bang)
   Util.validate({ bang = { bang, { 'boolean', 'nil' }, true } })
-  bang = bang ~= nil and bang or false
+  if bang == nil then
+    bang = false
+  end
 
   vim.ui.input({ prompt = 'Input the import file:' }, function(input) ---@param input? string
     if not input or input == '' then
@@ -146,7 +148,9 @@ end
 ---@param bang? boolean
 function M.gen_export_prompt(bang)
   Util.validate({ bang = { bang, { 'boolean', 'nil' }, true } })
-  bang = bang ~= nil and bang or false
+  if bang == nil then
+    bang = false
+  end
 
   vim.ui.input({ prompt = 'Input the export file:' }, function(input) ---@param input? string
     if not input or input == '' then
@@ -393,7 +397,9 @@ M.open_menu = M.select.new({
   end,
   choices_list = function(exit)
     Util.validate({ exit = { exit, { 'boolean', 'nil' }, true } })
-    exit = exit ~= nil and exit or true
+    if exit == nil then
+      exit = true
+    end
 
     local Config = require('project.config')
     local res_list = {
@@ -431,7 +437,11 @@ M.open_menu = M.select.new({
 
 M.session_menu = M.select.new({
   callback = function(ctx)
-    local only_cd = (ctx and ctx.bang ~= nil and ctx.bang) and ctx.bang or false
+    local only_cd = false
+    if ctx then
+      only_cd = ctx.bang
+    end
+
     local choices_list = M.session_menu.choices_list()
     if #choices_list == 1 then
       vim.notify('No sessions available!', WARN)

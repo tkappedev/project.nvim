@@ -19,8 +19,6 @@ function M.setup()
       name = 'ProjectPicker',
       desc = 'Open the picker.nvim picker for project.nvim',
       callback = function(ctx)
-        ctx.bang = ctx.bang ~= nil and ctx.bang or false
-
         local cmd = { 'rg', '--files', '--ignore', '--text', '--glob', '!.git/' }
         if ctx.bang or require('project.config').options.picker.hidden then
           table.insert(cmd, '--hidden')

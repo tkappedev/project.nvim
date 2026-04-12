@@ -9,15 +9,42 @@ local action_names = { ---@diagnostic disable-line:unused-local
   search_in_project_files = 1,
 }
 
----@enum (key) Project.Config.Sort
+---@enum (key) ProjectOpts.ScopeChdir
+local scope_chdir = { ---@diagnostic disable-line:unused-local
+  global = 1,
+  win = 1,
+  tab = 1,
+}
+
+---@enum (key) ProjectOpts.Sort
 local sort = { ---@diagnostic disable-line:unused-local
   newest = 1,
   oldest = 1,
 }
 
+---@class ProjectOpts.DisableOn
+---@field ft? string[]
+---@field bt? string[]
+
+---@class ProjectDefaults.DisableOn: ProjectOpts.DisableOn
+---@field ft string[]
+---@field bt string[]
+
+---@class Project.Telescope.Mappings
+---Insert mode mappings.
+---
+---@field i? table<string, Project.Telescope.ActionNames>
+---Normal mode mappings.
+---
+---@field n? table<string, Project.Telescope.ActionNames>
+
+---@class Project.Telescope.DefaultMappings: Project.Telescope.Mappings
+---@field i table<string, Project.Telescope.ActionNames>
+---@field n table<string, Project.Telescope.ActionNames>
+
 ---Table of options used for control for detecting projects not owned by the current user.
 --- ---
----@class Project.Config.DifferentOwners
+---@class ProjectOpts.DifferentOwners
 ---Determines whether a project will be added
 ---if its project root is owned by a different user.
 ---
@@ -34,9 +61,13 @@ local sort = { ---@diagnostic disable-line:unused-local
 --- ---
 ---@field notify? boolean
 
+---@class ProjectDefaults.DifferentOwners: ProjectOpts.DifferentOwners
+---@field allow boolean
+---@field notify boolean
+
 ---Table of options used for the snacks picker.
 --- ---
----@class Project.Config.Snacks
+---@class ProjectOpts.Snacks
 ---Determines whether the `snacks.nvim` integration is enabled.
 ---
 ---If `snacks.nvim` is not installed, this won't make a difference.
@@ -46,24 +77,13 @@ local sort = { ---@diagnostic disable-line:unused-local
 ---@field enabled? boolean
 ---@field opts? ProjectSnacksConfig
 
+---@class ProjectDefaults.Snacks: ProjectOpts.Snacks
+---@field enabled boolean
+---@field opts ProjectSnacksConfig
+
 ---Table of options used for the telescope picker.
 --- ---
----@class Project.Config.Telescope
----Determines whether the newest projects come first in the
----telescope picker (`'newest'`), or the oldest (`'oldest'`).
---- ---
----Default: `'newest'`
---- ---
----@field sort? Project.Config.Sort
----If you have `telescope-file-browser.nvim` installed, you can enable this
----so that the Telescope picker uses it instead of the `find_files` builtin.
----
----If `true`, use `telescope-file-browser.nvim` instead of builtins.
----In case it is not available, it'll fall back to `find_files`.
---- ---
----Default: `false`
---- ---
----@field prefer_file_browser? boolean
+---@class ProjectOpts.Telescope
 ---Set this to `true` if you don't want the file picker to appear
 ---after you've selected a project.
 ---
@@ -78,31 +98,57 @@ local sort = { ---@diagnostic disable-line:unused-local
 --- ---
 ---Default: check the README
 --- ---
----@field mappings? table<'i'|'n', table<string, Project.Telescope.ActionNames>>
+---@field mappings? Project.Telescope.Mappings
+---If you have `telescope-file-browser.nvim` installed, you can enable this
+---so that the Telescope picker uses it instead of the `find_files` builtin.
+---
+---If `true`, use `telescope-file-browser.nvim` instead of builtins.
+---In case it is not available, it'll fall back to `find_files`.
+--- ---
+---Default: `false`
+--- ---
+---@field prefer_file_browser? boolean
+---Determines whether the newest projects come first in the
+---telescope picker (`'newest'`), or the oldest (`'oldest'`).
+--- ---
+---Default: `'newest'`
+--- ---
+---@field sort? ProjectOpts.Sort
+
+---@class ProjectDefaults.Telescope: ProjectOpts.Telescope
+---@field disable_file_picker boolean
+---@field mappings Project.Telescope.DefaultMappings
+---@field prefer_file_browser boolean
+---@field sort ProjectOpts.Sort
 
 ---Options for logging utility.
 --- ---
----@class Project.Config.Logging
+---@class ProjectOpts.Logging
 ---If `true`, it enables logging in the same directory in which your
 ---history file is stored.
 --- ---
 ---Default: `false`
 --- ---
 ---@field enabled? boolean
----The maximum logfile size (in megabytes).
---- ---
----Default: `1.1`
---- ---
----@field max_size? number
 ---Path in which the log file will be saved.
 --- ---
 ---Default: `vim.fn.stdpath('state')`
 --- ---
 ---@field logpath? string
+---The maximum logfile size in [Gibibytes](https://simple.wikipedia.org/wiki/Gibibyte) (GiB).
+--- ---
+---Default: `1.1`
+--- ---
+---@field max_size? number
+
+---@class ProjectDefaults.Logging: ProjectOpts.Logging
+---@field enabled boolean
+---@field logpath string
+---@field max_size number
 
 ---Table of options used for `picker.nvim` integration
 --- ---
----@class Project.Config.Picker
+---@class ProjectOpts.Picker
 ---Determines whether the `picker.nvim` integration is enabled.
 ---
 ---If `picker.nvim` is not installed, this won't make a difference.
@@ -122,11 +168,16 @@ local sort = { ---@diagnostic disable-line:unused-local
 --- ---
 ---Default: `'newest'`
 --- ---
----@field sort? Project.Config.Sort
+---@field sort? ProjectOpts.Sort
+
+---@class ProjectDefaults.Picker: ProjectOpts.Picker
+---@field enabled boolean
+---@field hidden boolean
+---@field sort ProjectOpts.Sort
 
 ---Table of options used for `fzf-lua` integration
 --- ---
----@class Project.Config.FzfLua
+---@class ProjectOpts.FzfLua
 ---Determines whether the `fzf-lua` integration is enabled.
 ---
 ---If `fzf-lua` is not installed, this won't make a difference.
@@ -139,11 +190,15 @@ local sort = { ---@diagnostic disable-line:unused-local
 --- ---
 ---Default: `'newest'`
 --- ---
----@field sort? Project.Config.Sort
+---@field sort? ProjectOpts.Sort
+
+---@class ProjectDefaults.FzfLua: ProjectOpts.FzfLua
+---@field enabled boolean
+---@field sort ProjectOpts.Sort
 
 ---Table containing all the LSP-adjacent options.
 --- ---
----@class Project.Config.LSP
+---@class ProjectOpts.LSP
 ---If `true` then LSP-based method detection
 ---will take precedence over traditional pattern matching.
 ---
@@ -182,29 +237,15 @@ local sort = { ---@diagnostic disable-line:unused-local
 --- ---
 ---@field use_pattern_matching? boolean
 
+---@class ProjectDefaults.LSP: ProjectOpts.LSP
+---@field enabled boolean
+---@field ignore string[]
+---@field no_fallback boolean
+---@field use_pattern_matching boolean
+
 ---The options available for in `require('project').setup()`.
 --- ---
----@class Project.Config.Options
----Table of options used for control for detecting projects not owned by the current user.
---- ---
----@field different_owners? Project.Config.DifferentOwners
----Table containing all the LSP-adjacent options.
---- ---
----@field lsp? Project.Config.LSP
----If `true` your root directory won't be changed automatically,
----so you have the option to manually do so
----using the `:ProjectRoot` command.
---- ---
----Default: `false`
---- ---
----@field manual_mode?  boolean
----All the patterns used to detect the project's root directory.
----
----See `:h project.nvim-pattern-matching`.
---- ---
----Default: `{ '.git', '.github', '_darcs', '.hg', '.bzr', '.svn', 'Pipfile', ... }`
---- ---
----@field patterns? string[]
+---@class ProjectOpts
 ---Hook to run before attaching to a new project.
 ---
 ---It recieves `target_dir` and, optionally,
@@ -217,6 +258,76 @@ local sort = { ---@diagnostic disable-line:unused-local
 ---Default: `nil`
 --- ---
 ---@field before_attach? nil|fun(target_dir: string, method: string)
+---The path where `project.nvim` will store the project history directory,
+---containing the project history in it.
+---
+---For more info, run `:lua vim.print(require('project').get_history_paths())`
+--- ---
+---Default: `vim.fn.stdpath('data')`
+--- ---
+---@field datapath? string
+---Table of options used for control for detecting projects not owned by the current user.
+--- ---
+---@field different_owners? ProjectOpts.DifferentOwners
+---Determines in what filetypes/buftypes the plugin won't execute.
+---It's a table with two fields:
+---
+--- - `ft`: A string array of filetypes to exclude
+--- - `bt`: A string array of buftypes to exclude
+---
+---CREDITS TO [@Zeioth](https://github.com/Zeioth)!:
+---[`Zeioth/project.nvim`](https://github.com/Zeioth/project.nvim/commit/95f56b8454f3285b819340d7d769e67242d59b53)
+--- ---
+---The default value for this one can be found in the project's `README.md`.
+--- ---
+---@field disable_on? ProjectOpts.DisableOn
+---Don't calculate root dir on specific directories,
+---e.g. `{ '~/.cargo/*', ... }`.
+---
+---For more info see `:h project-nvim.pattern-matching`.
+--- ---
+---Default: `{}`
+--- ---
+---@field exclude_dirs? string[]
+---If enabled, set `vim.o.autochdir` to `true`.
+---
+---This is disabled by default because the plugin implicitly disables `autochdir`.
+--- ---
+---Default: `false`
+--- ---
+---@field enable_autochdir? boolean
+---Table of options used for the `fzf-lua` integration
+--- ---
+---@field fzf_lua? ProjectOpts.FzfLua
+---The history size. (by `@acristoffers`)
+---
+---This will indicate how many entries will be
+---written to the history file.
+---Set to `0` for no limit.
+--- ---
+---Default: `100`
+--- ---
+---@field historysize? integer
+---Options for logging utility.
+--- ---
+---@field log? ProjectOpts.Logging
+---Table containing all the LSP-adjacent options.
+--- ---
+---@field lsp? ProjectOpts.LSP
+---If `true` your root directory won't be changed automatically,
+---so you have the option to manually do so
+---using the `:ProjectRoot` command.
+--- ---
+---Default: `false`
+--- ---
+---@field manual_mode? boolean
+---All the patterns used to detect the project's root directory.
+---
+---See `:h project.nvim-pattern-matching`.
+--- ---
+---Default: `{ '.git', '.github', '_darcs', '.hg', '.bzr', '.svn', 'Pipfile', ... }`
+--- ---
+---@field patterns? string[]
 ---Hook to run after attaching to a new project.
 ---**_This only runs if the directory changes successfully._**
 ---
@@ -230,35 +341,9 @@ local sort = { ---@diagnostic disable-line:unused-local
 ---Default: `nil`
 --- ---
 ---@field on_attach? nil|fun(dir: string, method: string)
----If enabled, set `vim.o.autochdir` to `true`.
----
----This is disabled by default because the plugin implicitly disables `autochdir`.
+---Table of options used for the `picker.nvim` integration
 --- ---
----Default: `false`
---- ---
----@field enable_autochdir? boolean
----Make hidden files visible when using any picker.
---- ---
----Default: `false`
---- ---
----@field show_hidden? boolean
----Don't calculate root dir on specific directories,
----e.g. `{ '~/.cargo/*', ... }`.
----
----For more info see `:h project-nvim.pattern-matching`.
---- ---
----Default: `{}`
---- ---
----@field exclude_dirs? string[]
----If `false`, you'll get a _notification_ every time
----`project.nvim` changes directory.
----
----This is useful for debugging, or for players that
----enjoy verbose operations.
---- ---
----Default: `true`
---- ---
----@field silent_chdir? boolean
+---@field picker? ProjectOpts.Picker
 ---Determines the scope for changing the directory.
 ---
 ---Valid options are:
@@ -268,72 +353,67 @@ local sort = { ---@diagnostic disable-line:unused-local
 --- ---
 ---Default: `'global'`
 --- ---
----@field scope_chdir? 'global'|'tab'|'win'
----Determines in what filetypes/buftypes the plugin won't execute.
----It's a table with two fields:
+---@field scope_chdir? ProjectOpts.ScopeChdir
+---Make hidden files visible when using any picker.
+--- ---
+---Default: `false`
+--- ---
+---@field show_hidden? boolean
+---If `false`, you'll get a _notification_ every time
+---`project.nvim` changes directory.
 ---
---- - `ft`: A string array of filetypes to exclude
---- - `bt`: A string array of buftypes to exclude
----
----CREDITS TO [@Zeioth](https://github.com/Zeioth)!:
----[`Zeioth/project.nvim`](https://github.com/Zeioth/project.nvim/commit/95f56b8454f3285b819340d7d769e67242d59b53)
+---This is useful for debugging, or for players that
+---enjoy verbose operations.
 --- ---
----The default value for this one can be found in the project's `README.md`.
+---Default: `true`
 --- ---
----@field disable_on? table<'ft'|'bt', string[]>
----The path where `project.nvim` will store the project history directory,
----containing the project history in it.
----
----For more info, run `:lua vim.print(require('project').get_history_paths())`
---- ---
----Default: `vim.fn.stdpath('data')`
---- ---
----@field datapath? string
----The history size. (by `@acristoffers`)
----
----This will indicate how many entries will be
----written to the history file.
----Set to `0` for no limit.
---- ---
----Default: `100`
---- ---
----@field historysize? integer
----Table of options used for the `fzf-lua` integration
---- ---
----@field fzf_lua? Project.Config.FzfLua
----Table of options used for the `picker.nvim` integration
---- ---
----@field picker? Project.Config.Picker
+---@field silent_chdir? boolean
 ---Table of options used for the `snacks.nvim` picker.
 --- ---
----@field snacks? Project.Config.Snacks
----Options for logging utility.
---- ---
----@field log? Project.Config.Logging
+---@field snacks? ProjectOpts.Snacks
 ---Table of options used for the telescope picker.
 --- ---
----@field telescope? Project.Config.Telescope
+---@field telescope? ProjectOpts.Telescope
 
 local MODSTR = 'project.config.defaults'
 local WARN = vim.log.levels.WARN
 local Util = require('project.util')
 
----@class Project.Config.Defaults: Project.Config.Options
----@field expand_excluded fun(self: Project.Config.Defaults)
----@field gen_methods fun(self: Project.Config.Defaults): methods: { [1]: 'pattern' }|{ [1]: 'lsp', [2]: 'pattern' }
----@field new fun(opts?: Project.Config.Options): defaults: Project.Config.Defaults|Project.Config.Options
----@field verify fun(self: Project.Config.Defaults)
----@field verify_datapath fun(self: Project.Config.Defaults)
----@field verify_fzf_lua fun(self: Project.Config.Defaults)
----@field verify_histsize fun(self: Project.Config.Defaults)
----@field verify_lists fun(self: Project.Config.Defaults)
----@field verify_logging fun(self: Project.Config.Defaults)
----@field verify_lsp fun(self: Project.Config.Defaults)
----@field verify_owners fun(self: Project.Config.Defaults)
----@field verify_scope_chdir fun(self: Project.Config.Defaults)
+---@class ProjectDefaults: ProjectOpts
+---@field before_attach nil|fun(target_dir: string, method: string)
+---@field datapath string
+---@field different_owners ProjectDefaults.DifferentOwners
+---@field disable_on ProjectDefaults.DisableOn
+---@field enable_autochdir boolean
+---@field exclude_dirs string[]
+---@field expand_excluded fun(self: ProjectDefaults)
+---@field fzf_lua ProjectDefaults.FzfLua
+---@field gen_methods fun(self: ProjectDefaults): methods: { [1]: 'pattern' }|{ [1]: 'lsp', [2]: 'pattern' }
+---@field historysize integer
+---@field log ProjectDefaults.Logging
+---@field lsp ProjectDefaults.LSP
+---@field manual_mode boolean
+---@field new fun(opts?: ProjectDefaults|ProjectOpts): defaults: ProjectDefaults
+---@field on_attach nil|fun(dir: string, method: string)
+---@field patterns string[]
+---@field picker ProjectDefaults.Picker
+---@field scope_chdir ProjectOpts.ScopeChdir
+---@field show_hidden boolean
+---@field silent_chdir boolean
+---@field snacks ProjectDefaults.Snacks
+---@field telescope ProjectDefaults.Telescope
+---@field verify fun(self: ProjectDefaults)
+---@field verify_datapath fun(self: ProjectDefaults)
+---@field verify_fzf_lua fun(self: ProjectDefaults)
+---@field verify_histsize fun(self: ProjectDefaults)
+---@field verify_lists fun(self: ProjectDefaults)
+---@field verify_logging fun(self: ProjectDefaults)
+---@field verify_lsp fun(self: ProjectDefaults)
+---@field verify_owners fun(self: ProjectDefaults)
+---@field verify_scope_chdir fun(self: ProjectDefaults)
 
 ---@diagnostic disable-next-line:missing-fields
-local DEFAULTS = { ---@type Project.Config.Defaults
+local DEFAULTS = { ---@type ProjectDefaults
   different_owners = { allow = false, notify = true },
   picker = { enabled = false, sort = 'newest', hidden = false },
   snacks = {
@@ -685,10 +765,10 @@ end
 function DEFAULTS.new(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  ---@type Project.Config.Defaults
-  local obj = setmetatable(vim.tbl_deep_extend('keep', opts or {}, DEFAULTS), {
-    __index = DEFAULTS,
-  })
+  local obj =
+    setmetatable(vim.tbl_deep_extend('keep', opts or {}, DEFAULTS), { --[[@as ProjectDefaults]]
+      __index = DEFAULTS,
+    })
   return obj
 end
 

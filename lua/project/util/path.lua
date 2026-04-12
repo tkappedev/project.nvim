@@ -199,10 +199,10 @@ function Path.match(dir, pattern)
   return Path.has(dir, pattern)
 end
 
----@param path? string
+---@param path string|nil
 function Path.create_path(path)
   Util.validate({ path = { path, { 'string', 'nil' }, true } })
-  path = path or Path.projectpath
+  path = path or Path.projectpath --[[@as string]]
 
   if not Path.exists(path) then
     require('project.util.log').debug(

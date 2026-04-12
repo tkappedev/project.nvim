@@ -2,7 +2,7 @@ local assert = require('luassert') ---@type Luassert
 
 describe('project.nvim setup', function()
   local project ---@type Project
-  local defaults ---@type Project.Config.Options
+  local defaults ---@type ProjectOpts
   local ok ---@type boolean
 
   before_each(function()

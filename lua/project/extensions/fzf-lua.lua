@@ -45,13 +45,13 @@ function M.exec(cb)
   cb()
 end
 
-function M.setup_commands()
+function M.setup()
   if not Config.options.fzf_lua.enabled then
     return
   end
   if not Util.mod_exists('fzf-lua') then
-    Log.error(('(%s.setup_commands): `fzf-lua` is not installed!'):format(MODSTR))
-    vim.notify(('(%s.setup_commands): `fzf-lua` is not installed!'):format(MODSTR), ERROR)
+    Log.error(('(%s.setup): `fzf-lua` is not installed!'):format(MODSTR))
+    vim.notify(('(%s.setup): `fzf-lua` is not installed!'):format(MODSTR), ERROR)
     return
   end
 

@@ -9,23 +9,23 @@ local Util = require('project.util')
 ---@class Project.Config
 ---@field attach_augroup integer
 ---@field before_attach? integer
----@field float? Project.ConfigLoc
+---@field private float? Project.ConfigLoc
 ---@field on_attach? integer
 local Config = {}
 
 ---Get the default options for configuring `project`.
 --- ---
----@return Project.Config.Defaults defaults
+---@return ProjectDefaults defaults
 ---@nodiscard
 function Config.get_defaults()
   return require('project.config.defaults')
 end
 
-Config.options = setmetatable({}, { __index = Config.get_defaults() }) ---@type Project.Config.Defaults
+Config.options = setmetatable({}, { __index = Config.get_defaults() }) ---@type ProjectDefaults
 
 ---The function called when running `require('project').setup()`.
 --- ---
----@param options? Project.Config.Options the `project.nvim` config options
+---@param options? ProjectOpts The `project.nvim` config options.
 function Config.setup(options)
   Util.validate({ options = { options, { 'table', 'nil' }, true } })
 
@@ -61,7 +61,7 @@ function Config.setup(options)
 
   if Config.options.fzf_lua.enabled then
     Log.debug(('(%s.setup): fzf-lua integration enabled.'):format(MODSTR))
-    require('project.extensions.fzf-lua').setup_commands()
+    require('project.extensions.fzf-lua').setup()
   end
   if Config.options.picker.enabled then
     Log.debug(('(%s.setup): picker.nvim integration enabled.'):format(MODSTR))
@@ -96,7 +96,7 @@ function Config.get_config()
     'verify_owners',
     'verify_scope_chdir',
   }
-  local opts = {} ---@type Project.Config.Options
+  local opts = {} ---@type ProjectOpts
   for k, v in pairs(Config.options) do
     if not vim.list_contains(exceptions, k) then
       opts[k] = v
