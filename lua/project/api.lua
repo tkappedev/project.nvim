@@ -125,8 +125,8 @@ function Api.get_last_project(entry)
   return entry and res or res.path
 end
 
----@param path? ProjectPaths
----@return string|HistoryPath history_paths
+---@overload fun(): history_paths: HistoryPath
+---@overload fun(path: ProjectPaths): string
 ---@nodiscard
 function Api.get_history_paths(path)
   Util.validate({ path = { path, { 'string', 'nil' }, true } })

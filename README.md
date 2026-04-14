@@ -311,14 +311,17 @@ By default, `setup()` loads with the following options:
       -- icon = {},
       -- path_icons = {},
     },
+    show = 'paths', ---@type 'paths'|'names'
   },
   fzf_lua = {
     enabled = false,
+    show = 'paths', ---@type 'paths'|'names'
     sort = 'newest', ---@type 'newest'|'oldest'
   },
   picker = {
     enabled = false,
     hidden = false, -- Show hidden files
+    show = 'paths', ---@type 'paths'|'names'
     sort = 'newest', ---@type 'newest'|'oldest'
   },
   disable_on = {
@@ -341,8 +344,6 @@ By default, `setup()` loads with the following options:
     bt = { 'help', 'nofile', 'nowrite', 'terminal' },
   },
   telescope = {
-    sort = 'newest', ---@type 'oldest'|'newest'
-    prefer_file_browser = false,
     disable_file_picker = false,
     mappings = {
       n = {
@@ -362,6 +363,9 @@ By default, `setup()` loads with the following options:
         ['<C-w>'] = 'change_working_directory',
       },
     },
+    prefer_file_browser = false,
+    show = 'paths', ---@type 'paths'|'names'
+    sort = 'newest', ---@type 'oldest'|'newest'
   },
 }
 ```
