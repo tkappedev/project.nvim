@@ -11,6 +11,94 @@ local ERROR = vim.log.levels.ERROR
 ---@class Project.Util
 local M = {}
 
+---@param s string
+---@param chars string
+---@param extra_allowed? { spaces?: boolean, newlines?: boolean }
+---@return boolean result
+function M.only_has_chars(s, chars, extra_allowed)
+  M.validate({
+    s = { s, { 'string' } },
+    chars = { chars, { 'string' } },
+    extra_allowed = { extra_allowed, { 'table', 'nil' }, true },
+  })
+  extra_allowed = extra_allowed or {}
+
+  M.validate({
+    ['extra_allowed.spaces'] = { extra_allowed.spaces, { 'boolean', 'nil' }, true },
+    ['extra_allowed.newlines'] = { extra_allowed.newlines, { 'boolean', 'nil' }, true },
+  })
+  if extra_allowed.spaces == nil then
+    extra_allowed.spaces = false
+  end
+  if extra_allowed.newlines == nil then
+    extra_allowed.newlines = false
+  end
+
+  if s == '' or chars == '' then
+    return false
+  end
+
+  local chars_list = M.dedup(vim.split(chars, '', { trimempty = true }))
+  local i = 1
+  while i <= #chars_list do
+    if chars_list[i] == '\n' then
+      table.remove(chars_list, i)
+    else
+      i = i + 1
+    end
+  end
+  if vim.tbl_isempty(chars_list) then
+    return false
+  end
+
+  if extra_allowed.spaces then
+    table.insert(chars_list, ' ')
+  end
+  if extra_allowed.newlines then
+    table.insert(chars_list, '\n')
+  end
+
+  local str_list = vim.split(s, '', { trimempty = false })
+  for _, c in ipairs(str_list) do
+    if not vim.list_contains(chars_list, c) then
+      return false
+    end
+  end
+  return true
+end
+
+---@param list any[]
+---@param t? type
+---@return boolean result
+function M.same_type_list(list, t)
+  M.validate({
+    list = { list, { 'table' } },
+    t = { t, { 'string', 'nil' }, true },
+  })
+  if
+    t
+    and not vim.list_contains(
+      { 'boolean', 'userdata', 'string', 'function', 'number', 'thread', 'table' },
+      t
+    )
+  then
+    error(('(%s.same_type_list): Invalid type `%s`'):format(t), ERROR)
+  end
+  if vim.tbl_isempty(list) or not vim.islist(list) then
+    return false
+  end
+
+  for _, v in ipairs(list) do
+    if not t then
+      t = type(v)
+    end
+    if not M.is_type(t, v) then
+      return false
+    end
+  end
+  return true
+end
+
 ---@overload fun(option: string|vim.wo|vim.bo): value: any
 ---@overload fun(option: string|vim.wo|vim.bo, param: 'scope', param_value: 'local'|'global'): value: any
 ---@overload fun(option: string|vim.wo|vim.bo, param: 'ft', param_value: string): value: any
@@ -443,9 +531,8 @@ function M.executable(exe)
     return vim.fn.executable(exe) == 1
   end
 
-  local res = false
-
   ---@cast exe string[]
+  local res = false
   for _, v in ipairs(exe) do
     res = M.executable(v)
     if not res then
@@ -455,27 +542,29 @@ function M.executable(exe)
   return res
 end
 
----@param tbl string[]
----@return string[] res
+---@param tbl string[]|ProjectHistoryEntry[]
+---@return string[]|ProjectHistoryEntry[] res
 ---@nodiscard
 function M.delete_duplicates(tbl)
   M.validate({ tbl = { tbl, { 'table' } } })
 
   local cache_dict = {} ---@type table<string, integer>
+  require('project.util.history').is_legacy(tbl)
+  local legacy = require('project.util.history').legacy
   for _, v in ipairs(tbl) do
-    local normalised_path = M.normalise_path(v)
-    if cache_dict[normalised_path] == nil then
+    local normalised_path = M.normalise_path(legacy and v or v.path)
+    if not cache_dict[normalised_path] then
       cache_dict[normalised_path] = 1
     else
       cache_dict[normalised_path] = cache_dict[normalised_path] + 1
     end
   end
 
-  local res = {} ---@type string[]
+  local res = {} ---@type string[]|ProjectHistoryEntry[]
   for _, v in ipairs(tbl) do
-    local normalised_path = M.normalise_path(v)
+    local normalised_path = M.normalise_path(legacy and v or v.path)
     if cache_dict[normalised_path] == 1 then
-      table.insert(res, normalised_path)
+      table.insert(res, legacy and normalised_path or { path = normalised_path, name = v.name })
     else
       cache_dict[normalised_path] = cache_dict[normalised_path] - 1
     end
@@ -606,23 +695,36 @@ end
 ---If the data passed to the function is not a table,
 ---an error will be raised.
 --- ---
----@param T table
----@return table NT
+---@generic T
+---@param T T
+---@param key? string|integer
+---@return T NT
 ---@nodiscard
-function M.dedup(T)
-  M.validate({ T = { T, { 'table' } } })
-
+function M.dedup(T, key)
+  M.validate({
+    T = { T, { 'table' } },
+    key = { key, { 'string', 'nil' }, true },
+  })
+  key = (key and key ~= '') and key or nil
   if vim.tbl_isempty(T) then
     return T
   end
 
   local NT = {}
+  local names = {} ---@type any[]
   for _, v in pairs(T) do
     local not_dup = false
     if M.is_type('table', v) then
-      not_dup = not vim.tbl_contains(NT, function(val)
-        return vim.deep_equal(val, v)
-      end, { predicate = true })
+      if not key then
+        not_dup = not vim.tbl_contains(NT, function(val)
+          return vim.deep_equal(val, v)
+        end, { predicate = true })
+      else
+        not_dup = not vim.list_contains(names, v[key])
+        if not_dup then
+          table.insert(names, v[key])
+        end
+      end
     else
       not_dup = not vim.list_contains(NT, v)
     end
@@ -633,7 +735,7 @@ function M.dedup(T)
   return NT
 end
 
----@generic T: any
+---@generic T
 ---@param t type
 ---@param data T
 ---@param sep? string

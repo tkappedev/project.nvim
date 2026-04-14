@@ -98,16 +98,31 @@ function Api.check_oil(bufnr)
   return dir
 end
 
----@return string|nil last
+---@overload fun(): last: string|nil
+---@overload fun(entry: false): last: string|nil
+---@overload fun(entry: true): last: ProjectHistoryEntry|nil
 ---@nodiscard
-function Api.get_last_project()
+function Api.get_last_project(entry)
+  Util.validate({ entry = { entry, { 'boolean', 'nil' }, true } })
+  if entry == nil then
+    entry = false
+  end
+
   local recent = History.get_recent_projects()
   if vim.tbl_isempty(recent) or #recent == 1 then
     return
   end
 
   recent = Util.reverse(recent)
-  return #History.session_projects <= 1 and recent[2] or recent[1]
+
+  local res = #History.session_projects <= 1 and recent[2] or recent[1]
+  if Util.is_type('string', res) then
+    ---@cast res string
+    return res
+  end
+
+  ---@cast res ProjectHistoryEntry
+  return entry and res or res.path
 end
 
 ---@param path? ProjectPaths
@@ -245,22 +260,42 @@ function Api.set_pwd(dir, method)
 
   local modified = false
   local unexpand_dir = Util.rstrip('/', vim.fn.fnamemodify(dir, ':p:~'))
-  if not (History.session_projects and vim.list_contains(History.session_projects, dir)) then
-    table.insert(History.session_projects, dir)
+  if not History.session_projects then
+    History.session_projects = {}
+  end
+  if
+    not vim.tbl_contains(History.session_projects, function(val)
+      return vim.deep_equal(History.legacy and val or val.path, dir)
+    end, { predicate = true })
+  then
+    table.insert(History.session_projects, History.legacy and dir or {
+      path = dir,
+      name = History.find_entry('recent', dir, 'name')
+        or vim.fn.fnamemodify(dir, ':p:h:h:t') .. '/' .. vim.fn.fnamemodify(dir, ':p:h:t'),
+    })
     modified = true
     Log.debug(('Added project %s to the top of session list'):format(unexpand_dir))
   end
   if not modified and #History.session_projects > 1 then
-    local old_pos ---@type integer
+    local name = ''
+    local old_pos = nil ---@type integer|nil
     for k, v in ipairs(History.session_projects) do
-      if v == dir then
-        old_pos = k
+      local v_dir = History.legacy and v or v.path
+      if v_dir == dir then
+        old_pos = k --[[@as integer]]
+        if not History.legacy then
+          name = v.name
+        end
         break
       end
     end
-    if old_pos ~= 1 then
+    if old_pos and old_pos ~= 1 then
       table.remove(History.session_projects, old_pos)
-      table.insert(History.session_projects, 1, dir) -- HACK: Move project to start of table
+      table.insert(
+        History.session_projects,
+        1,
+        History.legacy and dir or { path = dir, name = name }
+      )
       Log.debug(
         ('Moved project %s from %d to the top of session list'):format(unexpand_dir, old_pos)
       )
@@ -396,6 +431,21 @@ function Api.get_current_project(bufnr)
   local curr, method = Api.get_project_root(bufnr)
   local last = Api.get_last_project()
   return curr, method, last
+end
+
+---@param bufnr? integer
+---@return string|nil name
+---@nodiscard
+function Api.get_current_project_name(bufnr)
+  Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
+  bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
+
+  if not Api.buffer_valid(bufnr) then
+    return
+  end
+
+  local curr = Api.get_project_root(bufnr)
+  return History.find_entry('recent', curr, 'name')
 end
 
 ---@param bufnr? integer

@@ -1,3 +1,5 @@
+---@module 'picker'
+
 local Util = require('project.util')
 local Config = require('project.config')
 
@@ -42,7 +44,7 @@ local M = {}
 
 ---@return ProjectPickerItem[] items
 function M.get()
-  local recents = require('project').get_recent_projects()
+  local recents = require('project').get_recent_projects(true)
   if Config.options.picker.sort == 'newest' then
     recents = Util.reverse(recents)
   end

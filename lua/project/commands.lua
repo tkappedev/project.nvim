@@ -42,15 +42,14 @@ local complete_types = { ---@diagnostic disable-line:unused-local
   var = 1,
 }
 
----@alias ProjectCmdFun fun(ctx?: vim.api.keyset.create_user_command.command_args)
 ---@alias CompletorFunc fun(lead: string, line: string, pos: integer): completions: string[]
 ---@alias Project.CMD
 ---|{ desc: string, name: string, bang: boolean, complete?: (CompletorFunc)|CompleteTypes, nargs?: string|integer }
----|ProjectCmdFun
+---|fun(ctx?: vim.api.keyset.create_user_command.command_args)
 
 ---@class Project.Commands.Spec
 ---@field bang boolean|nil
----@field callback ProjectCmdFun
+---@field callback fun(ctx?: vim.api.keyset.create_user_command.command_args)
 ---@field complete nil|CompleteTypes|CompletorFunc
 ---@field desc string
 ---@field name string
@@ -65,10 +64,29 @@ local Api = require('project.api')
 local Log = require('project.util.log')
 local Config = require('project.config')
 
+---@param line string
+---@return string[] items
+local function complete_items(_, line)
+  local args = vim.split(line, '%s+', { trimempty = false })
+  if args[1]:sub(-1) == '!' and #args == 1 then
+    return {}
+  end
+
+  local recents = Util.reverse(History.get_recent_projects(true, true))
+  local res = {} ---@type string[]
+  for _, proj in ipairs(recents) do
+    if vim.startswith(proj, args[#args]) then
+      table.insert(res, proj)
+    end
+  end
+  return res
+end
+
 ---@class Project.Commands
+---@field cmds table<string, Project.CMD>
 local Commands = {}
 
-Commands.cmds = {} ---@type table<string, Project.CMD>
+Commands.cmds = {}
 
 ---@param specs Project.Commands.Spec[]
 function Commands.new(specs)
@@ -187,7 +205,12 @@ function Commands.create_user_commands()
         for _, input in ipairs(ctx.fargs) do
           input = Util.rstrip('/', (vim.fn.fnamemodify(input, ':p')))
           if Util.dir_exists(input) then
-            if Api.current_project ~= input and not vim.list_contains(session, input) then
+            if
+              Api.current_project ~= input
+              and not vim.tbl_contains(session, function(val)
+                return vim.deep_equal(val, input)
+              end, { predicate = true })
+            then
               Api.set_pwd(input, 'command')
               History.write_history()
             else
@@ -219,32 +242,14 @@ function Commands.create_user_commands()
       desc = 'Deletes the projects given as args, assuming they are valid. No args open a popup',
       bang = true,
       nargs = '*',
-      complete = function(_, line)
-        local args = vim.split(line, '%s+', { trimempty = false })
-        if args[1]:sub(-1) == '!' and #args == 1 then
-          return {}
-        end
-
-        local recents = Util.reverse(History.get_recent_projects(true))
-        if args[#args] == '' then
-          return recents
-        end
-
-        local res = {} ---@type string[]
-        for _, proj in ipairs(recents) do
-          if vim.startswith(proj, args[#args]) then
-            table.insert(res, proj)
-          end
-        end
-        return res
-      end,
+      complete = complete_items,
       callback = function(ctx)
         if not ctx or vim.tbl_isempty(ctx.fargs) then
           Popup.delete_menu()
           return
         end
 
-        local recent = History.get_recent_projects()
+        local recent = History.get_recent_projects(true)
         if not recent then
           Log.error('(:ProjectDelete): No recent projects!')
           vim.notify('(:ProjectDelete): No recent projects!', ERROR)
@@ -258,13 +263,25 @@ function Commands.create_user_commands()
           if path:sub(-1) == '/' then
             path = path:sub(1, path:len() - 1)
           end
-          if not (ctx.bang or vim.list_contains(recent, path) or path ~= '') then
+          if
+            not (
+              ctx.bang
+              or not vim.tbl_contains(recent, function(val)
+                return vim.deep_equal(val, path)
+              end, { predicate = true })
+              or path ~= ''
+            )
+          then
             msg = ('(:ProjectDelete): Could not delete `%s`, aborting'):format(path)
             Log.error(msg)
             vim.notify(msg, ERROR)
             return
           end
-          if vim.list_contains(recent, path) then
+          if
+            vim.tbl_contains(recent, function(val)
+              return vim.deep_equal(val, path)
+            end, { predicate = true })
+          then
             History.delete_project(path)
           end
         end
@@ -334,7 +351,7 @@ function Commands.create_user_commands()
       name = 'ProjectHistory',
       desc = 'Manage project history',
       bang = true,
-      nargs = '*',
+      nargs = '?',
       complete = function(_, line)
         local args = vim.split(line, '%s+', { trimempty = false })
         if (args[1]:sub(-1) == '!' and #args == 1) or #args > 2 then
@@ -342,7 +359,7 @@ function Commands.create_user_commands()
         end
 
         local res = {}
-        for _, choice in ipairs({ 'clear' }) do
+        for _, choice in ipairs({ 'clear', 'migrate' }) do
           if vim.startswith(choice, args[2]) then
             table.insert(res, choice)
           end
@@ -350,16 +367,22 @@ function Commands.create_user_commands()
         return res
       end,
       callback = function(ctx)
-        if vim.tbl_isempty(ctx.fargs) then
+        ctx.fargs[1] = ctx.fargs[1] or ''
+        if ctx.fargs[1] == '' then
           History.toggle_win()
           return
         end
 
-        if ctx.fargs[1] ~= 'clear' or #ctx.fargs > 1 then
+        if not vim.list_contains({ 'clear', 'migrate' }, ctx.fargs[1]) or #ctx.fargs > 1 then
           vim.notify('Usage:  `:ProjectHistory[!] [clear]`', WARN)
           return
         end
-        History.clear_historyfile(ctx.bang)
+
+        if ctx.fargs[1] == 'clear' then
+          History.clear_historyfile(ctx.bang)
+        end
+
+        History.migrate()
       end,
     },
     {
@@ -387,6 +410,24 @@ function Commands.create_user_commands()
       desc = 'Opens a menu to select a project from your history',
       callback = function()
         Popup.recents_menu()
+      end,
+    },
+    {
+      name = 'ProjectRename',
+      desc = 'Rename a project from your history',
+      nargs = '?',
+      complete = complete_items,
+      callback = function(ctx)
+        if History.legacy then
+          return
+        end
+
+        ctx.fargs[1] = ctx.fargs[1] or ''
+        if ctx.fargs[1] == '' then
+          Popup.rename_menu()
+          return
+        end
+        Popup.rename_input(Util.rstrip('/', vim.fn.fnamemodify(ctx.fargs[1], ':p')))
       end,
     },
     {

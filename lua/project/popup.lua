@@ -1,9 +1,9 @@
 ---@class Project.Popup.SelectChoices
----@field choices fun(): choices_dict: table<string, function>
+---@field choices fun(): choices_dict: table<string, fun(...?: any)>
 ---@field choices_list fun(exit?: boolean): choices: string[]
 
 ---@class Project.Popup.SelectSpec: Project.Popup.SelectChoices
----@field callback ProjectCmdFun
+---@field callback fun(ctx?: vim.api.keyset.create_user_command.command_args)
 
 local MODSTR = 'project.popup'
 local ERROR = vim.log.levels.ERROR
@@ -129,6 +129,25 @@ local M = {}
 ---@class Project.Popup.Select
 M.select = {}
 
+---@param project string
+function M.rename_input(project)
+  Util.validate({
+    project = { project, { 'string' } },
+  })
+
+  vim.ui.input({
+    prompt = ('Input the new name for project %s'):format(
+      Util.rstrip('/', vim.fn.fnamemodify(project, ':p:~'))
+    ),
+  }, function(input)
+    if not input or input == '' then
+      return
+    end
+
+    require('project.util.history').rename_project(project, input)
+  end)
+end
+
 ---@param bang? boolean
 function M.gen_import_prompt(bang)
   Util.validate({ bang = { bang, { 'boolean', 'nil' }, true } })
@@ -170,7 +189,7 @@ function M.gen_export_prompt(bang)
 end
 
 ---@param opts Project.Popup.SelectSpec
----@return Project.Popup.SelectChoices|ProjectCmdFun selector
+---@return Project.Popup.SelectChoices|fun(ctx?: vim.api.keyset.create_user_command.command_args) selector
 ---@nodiscard
 function M.select.new(opts)
   Util.validate({
@@ -184,23 +203,26 @@ function M.select.new(opts)
     error(('(%s.select.new): Empty args for constructor!'):format(MODSTR), ERROR)
   end
 
-  local T = setmetatable({ ---@type Project.Popup.SelectChoices|ProjectCmdFun
-    choices = opts.choices,
-    choices_list = opts.choices_list,
-  }, {
-    ---@param t Project.Popup.SelectChoices|ProjectCmdFun
-    ---@param k string
-    __index = function(t, k)
-      return rawget(t, k)
-    end,
-    __call = function(_, ctx) ---@param ctx? vim.api.keyset.create_user_command.command_args
-      if not ctx then
-        opts.callback()
-        return
-      end
-      opts.callback(ctx)
-    end,
-  })
+  local T = setmetatable(
+    { ---@type Project.Popup.SelectChoices|fun(ctx?: vim.api.keyset.create_user_command.command_args)
+      choices = opts.choices,
+      choices_list = opts.choices_list,
+    },
+    {
+      ---@param t Project.Popup.SelectChoices|fun(ctx?: vim.api.keyset.create_user_command.command_args)
+      ---@param k string
+      __index = function(t, k)
+        return rawget(t, k)
+      end,
+      __call = function(_, ctx) ---@param ctx? vim.api.keyset.create_user_command.command_args
+        if not ctx then
+          opts.callback()
+          return
+        end
+        opts.callback(ctx)
+      end,
+    }
+  )
   return T
 end
 
@@ -265,15 +287,66 @@ M.delete_menu = M.select.new({
     end)
   end,
   choices_list = function()
-    local recents = Util.reverse(require('project.util.history').get_recent_projects())
+    local recents = Util.reverse(require('project.util.history').get_recent_projects(true))
     table.insert(recents, 'Exit')
     return recents
   end,
   choices = function()
     local T = {} ---@type table<string, function>
-    for _, proj in ipairs(require('project.util.history').get_recent_projects()) do
+    for _, proj in ipairs(require('project.util.history').get_recent_projects(true)) do
       T[proj] = function()
         require('project.util.history').delete_project(proj)
+      end
+    end
+    T.Exit = function() end
+    return T
+  end,
+})
+
+M.rename_menu = M.select.new({
+  callback = function()
+    local choices_list = M.rename_menu.choices_list()
+    vim.ui.select(
+      choices_list,
+      { prompt = 'Select a project to rename:' },
+      function(item) ---@param item string
+        if not item then
+          return
+        end
+        if not vim.list_contains(choices_list, item) then
+          vim.notify('Bad selection!', ERROR)
+          return
+        end
+
+        local choice = M.rename_menu.choices()[item]
+        if not (choice and vim.is_callable(choice)) then
+          vim.notify('Bad selection!', ERROR)
+          return
+        end
+
+        vim.ui.input({
+          prompt = ('Input the new name for project %s'):format(
+            Util.rstrip('/', vim.fn.fnamemodify(item, ':p:~'))
+          ),
+        }, function(input)
+          if not input or input == '' then
+            return
+          end
+          choice(input)
+        end)
+      end
+    )
+  end,
+  choices_list = function()
+    local recents = Util.reverse(require('project.util.history').get_recent_projects(true))
+    table.insert(recents, 'Exit')
+    return recents
+  end,
+  choices = function()
+    local T = {} ---@type table<string, function>
+    for _, proj in ipairs(require('project.util.history').get_recent_projects(true)) do
+      T[proj] = function(name) ---@param name string
+        require('project.util.history').rename_project(proj, name)
       end
     end
     T.Exit = function() end
@@ -315,7 +388,7 @@ M.recents_menu = M.select.new({
     end)
   end,
   choices_list = function()
-    local choices_list = vim.deepcopy(require('project.util.history').get_recent_projects())
+    local choices_list = vim.deepcopy(require('project.util.history').get_recent_projects(true))
     if require('project.config').options.telescope.sort == 'newest' then
       choices_list = Util.reverse(choices_list)
     end
@@ -361,11 +434,12 @@ M.open_menu = M.select.new({
   end,
   choices = function()
     local Config = require('project.config')
-    local res = { ---@type table<string, ProjectCmdFun>
+    local res = { ---@type table<string, fun(ctx?: vim.api.keyset.create_user_command.command_args)>
       Session = M.session_menu,
       New = require('project.commands').cmds.ProjectAdd,
       Recents = M.recents_menu,
       Delete = M.delete_menu,
+      Rename = M.rename_menu,
       Config = require('project.commands').cmds.ProjectConfig,
       Historyfile = vim.cmd.ProjectHistory,
       Export = M.gen_export_prompt,
@@ -407,6 +481,7 @@ M.open_menu = M.select.new({
       'New',
       'Recents',
       'Delete',
+      'Rename',
       'Checkhealth',
       'Config',
       'Historyfile',
@@ -454,7 +529,7 @@ M.session_menu = M.select.new({
         if item == 'Exit' then
           return item
         end
-        return vim.fn.fnamemodify(item, ':~') .. (vim.fn.isdirectory(item) == 1 and '/' or '')
+        return vim.fn.fnamemodify(item, ':~')
       end,
     }, function(item)
       if not item then
@@ -476,7 +551,17 @@ M.session_menu = M.select.new({
     end)
   end,
   choices = function()
-    local sessions = require('project.util.history').session_projects
+    local History = require('project.util.history')
+    local sessions = History.session_projects
+
+    if not History.legacy then
+      local session_paths = {} ---@type string[]
+      for _, v in ipairs(sessions) do
+        table.insert(session_paths, v.path)
+      end
+
+      sessions = vim.deepcopy(session_paths)
+    end
     local choices = { Exit = function() end }
     if vim.tbl_isempty(sessions) then
       return choices
@@ -487,7 +572,17 @@ M.session_menu = M.select.new({
     return choices
   end,
   choices_list = function()
-    local choices = vim.deepcopy(require('project.util.history').session_projects)
+    local History = require('project.util.history')
+    local choices = vim.deepcopy(History.session_projects)
+    if not History.legacy then
+      local session_paths = {} ---@type string[]
+      for _, v in ipairs(choices) do
+        table.insert(session_paths, v.path)
+      end
+
+      choices = vim.deepcopy(session_paths)
+    end
+
     table.insert(choices, 'Exit')
     return choices
   end,
