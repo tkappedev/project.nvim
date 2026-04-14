@@ -4,7 +4,7 @@
 ---@field path string
 
 local MODSTR = 'project.health'
-
+local uv = vim.uv or vim.loop
 local Util = require('project.util')
 local Config = require('project.config')
 local Path = require('project.util.path')
@@ -45,14 +45,24 @@ function M.setup_check()
   end
 
   if Util.is_windows() and vim.g.project_disable_win32_warning ~= 1 then
-    vim.health.warn([[DISCLAIMER
+    vim.health.warn([[
+DISCLAIMER
 
 You're running on Windows. Issues are more likely to occur,
 bear that in mind.
 
 Please report any issues to the maintainers.
 
-If you wish to disable this warning, set `g:project_disable_win32_warning` to `1`.]])
+If you wish to disable this warning, set `g:project_disable_win32_warning` to `1`.
+    ]])
+  end
+
+  if History.legacy then
+    vim.health.warn(
+      'Your history has not been migrated yet! Please run `:ProjectHistory migrate` to migrate.'
+    )
+  else
+    vim.health.ok('Your history was migrated successfully! You can set names for your projects.')
   end
   return true
 end
@@ -104,7 +114,7 @@ function M.history_check()
   }
   for _, v in ipairs(P) do
     local name, ptype, path = v.name, v.type, v.path
-    local stat = (vim.uv or vim.loop).fs_stat(path)
+    local stat = uv.fs_stat(path)
     if not stat then
       vim.health.error(('%s: `%s` is missing or not readable!'):format(name, path))
       return
@@ -113,7 +123,7 @@ function M.history_check()
       vim.health.error(('%s: `%s` is not of type `%s`!'):format(name, path, ptype))
       return
     end
-    vim.health.ok(('%s: `%s`'):format(name, path))
+    vim.health.info(('%s: `%s`'):format(name, path))
   end
 end
 
@@ -171,11 +181,11 @@ function M.logging_check()
 end
 
 function M.fzf_lua_check()
-  vim.health.start('Fzf-Lua')
+  vim.health.start('`fzf-lua` Integration')
   if not Config.options.fzf_lua.enabled then
-    vim.health.warn([[`fzf-lua` integration is disabled.
-
-This doesn't represent an issue necessarily!]])
+    vim.health.warn(
+      '`fzf-lua` integration is disabled. This does not represent an issue necessarily!'
+    )
     return
   end
 
@@ -189,20 +199,21 @@ end
 
 function M.recent_proj_check()
   vim.health.start('Recent Projects')
-  local recents = History.get_recent_projects(false)
+  local recents = Util.reverse(History.get_recent_projects(false))
   if vim.tbl_isempty(recents) then
-    vim.health.warn([[No projects found in history!
+    vim.health.warn([[
+No projects found in history!
 
 If this is your first time using this plugin,
 or you just set a different `historypath` for your plugin,
 then you can ignore this.
 
 If this keeps appearing, though, check your config
-and submit an issue if pertinent.]])
+and submit an issue if pertinent.
+    ]])
     return
   end
 
-  recents = Util.reverse(recents)
   for i, project in ipairs(recents) do
     if History.legacy then
       vim.health.info(('%d. `%s`'):format(i, project))
@@ -229,19 +240,12 @@ function M.check()
   M.project_check()
   M.history_check()
   M.logging_check()
-  M.fzf_lua_check()
   M.options_check()
   M.recent_proj_check()
+  M.fzf_lua_check()
 
   Log.debug(('(%s): `checkhealth` successfully called.'):format(MODSTR))
 end
 
-local Health = setmetatable(M, { ---@type Project.Health
-  __index = M,
-  __newindex = function()
-    vim.notify('Project.Health is Read-Only!', vim.log.levels.ERROR)
-  end,
-})
-
-return Health
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:
