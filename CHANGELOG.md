@@ -1,5 +1,13 @@
 # Changelog
 
+## [v3.0.0-1](https://github.com/DrKJeff16/project.nvim/tree/v3.0.0-1) (2026-04-14)
+
+[Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v2.0.0-1...v3.0.0-1)
+
+**Implemented enhancements:**
+
+- refactor!: allow projects to be named [\#57](https://github.com/DrKJeff16/project.nvim/pull/57) ([DrKJeff16](https://github.com/DrKJeff16))
+
 ## [v2.0.0-1](https://github.com/DrKJeff16/project.nvim/tree/v2.0.0-1) (2026-03-15)
 
 [Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v1.1.0-1...v2.0.0-1)
