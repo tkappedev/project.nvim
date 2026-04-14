@@ -290,9 +290,12 @@ By default, `setup()` loads with the following options:
   show_hidden = false,
   exclude_dirs = {},
   silent_chdir = true,
-  scope_chdir = 'global',
-  datapath = vim.fn.stdpath('data'),
-  historysize = 100,
+  scope_chdir = 'global', ---@type 'global'|'tab'|'win'
+  history = {
+    save_dir = vim.fn.stdpath('data'),
+    save_file = 'project_history.json',
+    size = 100,
+  },
   log = {
     enabled = false,
     max_size = 1.1,
