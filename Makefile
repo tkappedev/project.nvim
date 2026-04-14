@@ -10,26 +10,6 @@ all:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo
 
-install-deps: ## Install LuaRocks dependencies
-	@$(LUAROCKS_CMD) luassert
-	@$(LUAROCKS_CMD) busted
-	@$(LUAROCKS_CMD) nlua
-
-test: ## Run tests
-	@echo -e "Running tests...\n"
-	@busted spec
-	@echo
-
-helptags: ## Generate Vim helptags
-	@echo -e "Generating helptags...\n"
-	@$(TAGS_CMD) > /dev/null 2>&1
-	@echo
-
-lint: ## Lint using StyLua
-	@echo -e "Running StyLua...\n"
-	@stylua .
-	@echo
-
 check: ## Check using selene
 	@echo -e "Running selene...\n"
 	@selene lua
@@ -40,4 +20,24 @@ clean: ## Clean the generated helptags
 
 distclean: clean ## Remove all the unnecessary junk
 	@rm -rf deps .ropeproject .mypy_cache
+
+helptags: ## Generate Vim helptags
+	@echo -e "Generating helptags...\n"
+	@$(TAGS_CMD) > /dev/null 2>&1
+	@echo
+
+install-deps: ## Install LuaRocks dependencies
+	@$(LUAROCKS_CMD) luassert
+	@$(LUAROCKS_CMD) busted
+	@$(LUAROCKS_CMD) nlua
+
+lint: ## Lint using StyLua
+	@echo -e "Running StyLua...\n"
+	@stylua .
+	@echo
+
+test: ## Run tests
+	@echo -e "Running tests...\n"
+	@busted spec
+	@echo
 # vim: set ts=4 sts=4 sw=0 noet ai si sta:
