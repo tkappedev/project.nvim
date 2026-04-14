@@ -58,16 +58,18 @@ function M.migrate()
 end
 
 ---@param project string
+---@param old_name string
 ---@param name string
-function M.rename_project(project, name)
-  if M.legacy then
-    return
-  end
-
+---@return boolean success
+function M.rename_project(project, old_name, name)
   Util.validate({
     project = { project, { 'string' } },
+    old_name = { old_name, { 'string' } },
     name = { name, { 'string' } },
   })
+  if M.legacy or vim.list_contains({ name, project }, '') then
+    return false
+  end
 
   local renamed = false
   local recent_i = 0
@@ -97,12 +99,15 @@ function M.rename_project(project, name)
   end
 
   if renamed then
-    -- TODO: Include old name and/or more information
-    vim.notify(('(%s.rename_project): Changed name successfully!'):format(MODSTR), INFO)
-    Log.debug(('(%s.rename_project): Changed name successfully!'):format(MODSTR))
+    vim.notify(
+      ('(%s.rename_project): Renamed from `%s` to `%s`!'):format(MODSTR, old_name, name),
+      INFO
+    )
+    Log.debug(('(%s.rename_project): Renamed from `%s` to `%s`!'):format(MODSTR, old_name, name))
 
     M.write_history()
   end
+  return renamed
 end
 
 ---@param force? boolean
@@ -553,7 +558,7 @@ function M.read_history()
 end
 
 ---@overload fun(): recents: ProjectHistoryEntry[]
----@overload fun(paths_only?: false, tilde?: boolean): recents: ProjectHistoryEntry[]
+---@overload fun(paths_only: false, tilde?: boolean): recents: ProjectHistoryEntry[]
 ---@overload fun(paths_only: true, tilde?: boolean): recents: string[]
 function M.get_recent_projects(paths_only, tilde)
   Util.validate({
@@ -739,26 +744,28 @@ If you encounter any bugs please raise an issue and it will be dealt with ASAP.]
 end
 
 ---@param search 'session'|'recent'
----@param project string
----@param field 'path'|'name'
+---@param value string
+---@param key 'path'|'name'
 ---@return string|nil entry_field
-function M.find_entry(search, project, field)
+function M.find_entry(search, value, key)
   Util.validate({
     search = { search, { 'string' } },
-    project = { project, { 'string' } },
-    field = { field, { 'string' } },
+    value = { value, { 'string' } },
+    key = { key, { 'string' } },
   })
-  if not vim.list_contains({ 'recent', 'session' }, search) then
-    return
-  end
-  if not (vim.list_contains({ 'path', 'name' }, field) and not M.legacy) then
+  if
+    not (
+      vim.list_contains({ 'recent', 'session' }, search)
+      and (vim.list_contains({ 'path', 'name' }, key) and not M.legacy)
+    )
+  then
     return
   end
 
   local tbl = search == 'session' and M.session_projects or M.recent_projects --[[@as ProjectHistoryEntry[]\]]
   for _, v in ipairs(tbl) do
-    if v.path == Util.rstrip('/', vim.fn.fnamemodify(project, ':p')) or v.name == project then
-      return v[field]
+    if v.path == Util.rstrip('/', vim.fn.fnamemodify(value, ':p')) or v.name == value then
+      return v[key]
     end
   end
 end

@@ -73,13 +73,31 @@ local function complete_items(_, line)
   end
 
   local recents = Util.reverse(History.get_recent_projects(true, true))
-  local res = {} ---@type string[]
-  for _, proj in ipairs(recents) do
-    if vim.startswith(proj, args[#args]) then
-      table.insert(res, proj)
+  for k = 2, #args, 1 do
+    local j = 1
+    while j <= #recents do
+      if recents[j] == args[k] then
+        table.remove(recents, j)
+        break
+      end
+
+      j = j + 1
     end
   end
-  return res
+
+  if args[#args] == '' then
+    return recents
+  end
+
+  local i = 1
+  while i <= #recents do
+    if not vim.startswith(recents[i], args[#args]) then
+      table.remove(recents)
+    else
+      i = i + 1
+    end
+  end
+  return recents
 end
 
 ---@class Project.Commands
@@ -415,19 +433,24 @@ function Commands.create_user_commands()
     {
       name = 'ProjectRename',
       desc = 'Rename a project from your history',
-      nargs = '?',
+      nargs = '*',
       complete = complete_items,
       callback = function(ctx)
         if History.legacy then
           return
         end
 
-        ctx.fargs[1] = ctx.fargs[1] or ''
-        if ctx.fargs[1] == '' then
+        if vim.tbl_isempty(ctx.fargs) then
           Popup.rename_menu()
           return
         end
-        Popup.rename_input(Util.rstrip('/', vim.fn.fnamemodify(ctx.fargs[1], ':p')))
+
+        for _, proj in ipairs(ctx.fargs) do
+          if not Popup.rename_input(Util.rstrip('/', vim.fn.fnamemodify(proj, ':p'))) then
+            vim.notify(('(ProjectRename): Unable to rename project `%s`!'):format(proj), ERROR)
+            return
+          end
+        end
       end,
     },
     {

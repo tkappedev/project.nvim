@@ -130,22 +130,38 @@ local M = {}
 M.select = {}
 
 ---@param project string
-function M.rename_input(project)
+---@param old_name? string
+---@return boolean success
+function M.rename_input(project, old_name)
   Util.validate({
     project = { project, { 'string' } },
+    old_name = { old_name, { 'string', 'nil' }, true },
   })
+  old_name = old_name or ''
 
+  local History = require('project.util.history')
+  if old_name == '' then
+    local entry = History.find_entry('recent', project, 'name')
+    if not entry then
+      return false
+    end
+
+    old_name = entry
+  end
+
+  local success = true
   vim.ui.input({
-    prompt = ('Input the new name for project %s'):format(
-      Util.rstrip('/', vim.fn.fnamemodify(project, ':p:~'))
-    ),
+    prompt = ('Input the new name for project %s'):format(old_name),
   }, function(input)
     if not input or input == '' then
+      success = false
       return
     end
 
-    require('project.util.history').rename_project(project, input)
+    success = History.rename_project(project, old_name, input)
   end)
+
+  return success
 end
 
 ---@param bang? boolean
@@ -326,7 +342,7 @@ M.rename_menu = M.select.new({
 
         vim.ui.input({
           prompt = ('Input the new name for project %s'):format(
-            Util.rstrip('/', vim.fn.fnamemodify(item, ':p:~'))
+            require('project.util.history').find_entry('recent', item, 'name')
           ),
         }, function(input)
           if not input or input == '' then
@@ -343,10 +359,12 @@ M.rename_menu = M.select.new({
     return recents
   end,
   choices = function()
-    local T = {} ---@type table<string, function>
-    for _, proj in ipairs(require('project.util.history').get_recent_projects(true)) do
-      T[proj] = function(name) ---@param name string
-        require('project.util.history').rename_project(proj, name)
+    local History = require('project.util.history')
+    local T = {} ---@type table<string, fun(name: string)>
+    for _, proj in ipairs(History.get_recent_projects()) do
+      ---@cast proj ProjectHistoryEntry
+      T[proj.path] = function(name)
+        History.rename_project(proj.path, proj.name, name)
       end
     end
     T.Exit = function() end
