@@ -538,8 +538,9 @@ function M.executable(exe)
   return res
 end
 
----@param tbl string[]|ProjectHistoryEntry[]
----@return string[]|ProjectHistoryEntry[] res
+---@generic T
+---@param tbl T
+---@return T res
 ---@nodiscard
 function M.delete_duplicates(tbl)
   M.validate({ tbl = { tbl, { 'table' } } })

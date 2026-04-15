@@ -21,22 +21,32 @@ M.config = {
 
 ---@return snacks.picker.finder.Item[] items
 function M.gen_items()
+  local History = require('project.util.history')
   local items = {} ---@type snacks.picker.finder.Item[]
-  local recents = require('project').get_recent_projects(true)
+  local recents = require('project').get_recent_projects(nil, true)
   if M.config.sort and M.config.sort == 'newest' then
     recents = Util.reverse(recents)
   end
+
   for i, proj in ipairs(recents) do
     local text = '' ---@type string
-    if M.config.show == 'paths' then
+    if History.legacy then
+      ---@cast proj string
       text = vim.fn.fnamemodify(proj, ':~')
+    elseif M.config.show == 'paths' then
+      ---@cast proj ProjectHistoryEntry
+      text = vim.fn.fnamemodify(proj.path, ':~')
     else
-      text = require('project.util.history').find_entry('recent', proj, 'name')
+      ---@cast proj ProjectHistoryEntry
+      text = History.find_entry('recent', proj.name, 'name')
     end
 
-    ---@type snacks.picker.finder.Item
-    local item = { value = vim.fn.fnamemodify(proj, ':~'), idx = i, text = text, score = 0 }
-    table.insert(items, item)
+    table.insert(items, {
+      idx = i,
+      score = i,
+      text = text,
+      value = vim.fn.fnamemodify(History.legacy and proj or proj.path, ':~'),
+    })
   end
   return items
 end
@@ -53,7 +63,7 @@ end
 
 ---@param item snacks.picker.finder.Item
 local function format_session_item(item)
-  local icon, display_value = apply_icon(item.value)
+  local icon, display_value = apply_icon(item.text)
   return { ---@type { [1]: string, [2]?: (string|string[]), virtual: boolean, field: string, resolve: fun(max_width: number):unknown[], inline: boolean }[]
     { icon.icon, icon.highlight },
     { display_value, 'Normal' },
@@ -61,14 +71,29 @@ local function format_session_item(item)
 end
 
 function M.pick()
+  local History = require('project.util.history')
+  local Popup = require('project.popup')
+  local Api = require('project.api')
   return require('snacks').picker.pick({
-    title = M.config.title,
-    layout = M.config.layout,
-    items = M.gen_items(),
-    preview = function()
-      return false
-    end,
-    format = format_session_item,
+    actions = {
+      chdir_only = function(self, item)
+        Api.set_pwd(item.value, 'snacks')
+        self:close()
+      end,
+      delete_project = function(self, item)
+        History.delete_project(vim.fn.expand(item.value), true)
+        self:close()
+        M.pick()
+      end,
+      rename = function(self, item)
+        Popup.rename_input(
+          vim.fn.expand(item.value),
+          History.find_entry('recent', item.value, 'name')
+        )
+        self:close()
+        M.pick()
+      end,
+    },
     confirm = function(self, item)
       self:close()
       if require('project.api').set_pwd(vim.fn.expand(item.value), 'snacks') then
@@ -86,27 +111,24 @@ function M.pick()
         })
       end
     end,
-    actions = {
-      delete_project = function(self, item)
-        require('project.util.history').delete_project(vim.fn.expand(item.value), true)
-        self:close()
-        M.pick()
-      end,
-      chdir_only = function(self, item)
-        require('project.api').set_pwd(item.value, 'snacks')
-        self:close()
-      end,
-    },
+    enter = true,
+    format = format_session_item,
+    items = M.gen_items(),
+    layout = M.config.layout,
+    preview = function()
+      return false
+    end,
+    show_empty = false,
+    title = M.config.title,
     win = {
       input = {
         keys = {
-          ['<C-d>'] = { 'delete_project', mode = { 'n', 'i' }, desc = 'Delete Project' },
+          ['<C-d>'] = { 'delete_project', mode = { 'n', 'i' }, desc = 'Delete a project' },
+          ['<C-r>'] = { 'rename_project', mode = { 'n', 'i' }, desc = 'Rename a project' },
           ['<C-w>'] = { 'chdir_only', mode = { 'n', 'i' }, desc = 'Change working directory' },
         },
       },
     },
-    show_empty = false,
-    enter = true,
   })
 end
 
@@ -125,9 +147,7 @@ function M.setup(opts)
     {
       name = 'ProjectSnacks',
       desc = 'Project picker using snacks.nvim',
-      callback = function()
-        M.pick()
-      end,
+      callback = M.pick,
     },
   })
 
