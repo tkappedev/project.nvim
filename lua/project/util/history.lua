@@ -840,7 +840,7 @@ function M.open_win()
     else
       ---@cast data ProjectHistoryEntry[]
       for _, entry in ipairs(data) do
-        table.insert(lines, entry.name)
+        table.insert(lines, ('(%s) - %s'):format(entry.name, entry.path))
       end
     end
 
