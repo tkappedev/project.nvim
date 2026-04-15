@@ -34,6 +34,7 @@ local valid_acts = {
   'find_project_files',
   'help_mappings',
   'recent_project_files',
+  'rename_project',
   'search_in_project_files',
 }
 

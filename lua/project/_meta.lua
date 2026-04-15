@@ -9,6 +9,7 @@ local action_names = {
   find_project_files = 1,
   help_mappings = 1,
   recent_project_files = 1,
+  rename_project = 1,
   search_in_project_files = 1,
 }
 

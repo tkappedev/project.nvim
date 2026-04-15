@@ -50,16 +50,23 @@ function M.delete_project(prompt_bufnr)
     (function()
       local results = History.get_recent_projects(true)
       if Config.options.telescope.sort == 'newest' then
-        Log.debug(('(%s.create_finder): Sorting order to `newest`.'):format(MODSTR))
+        Log.debug(('(%s.delete_project): Sorting order to `newest`.'):format(MODSTR))
         results = Util.reverse(results)
       end
       return Finders.new_table({
         results = results,
-        entry_maker = function(value) ---@param value string
-          local name = ('%s/%s'):format(
-            vim.fn.fnamemodify(value, ':h:t'),
-            vim.fn.fnamemodify(value, ':t')
-          )
+        entry_maker = function(value) ---@param value string|ProjectHistoryEntry
+          local name ---@type string
+          if History.legacy then
+            ---@cast value string
+            name = ('%s/%s'):format(
+              vim.fn.fnamemodify(value, ':h:t'),
+              vim.fn.fnamemodify(value, ':t')
+            )
+          else
+            ---@cast value ProjectHistoryEntry
+            name = value.name
+          end
           local action_entry = { ---@class Project.ActionEntry
             display = make_display,
             name = name,
@@ -146,6 +153,56 @@ function M.search_in_project_files(prompt_bufnr)
     return
   end
   Builtin.live_grep({ cwd = project_path, hidden = Config.options.show_hidden, mode = 'insert' })
+end
+
+---@param prompt_bufnr integer
+function M.rename_project(prompt_bufnr)
+  local active_entry = State.get_selected_entry() ---@type Project.ActionEntry
+  if not active_entry then
+    Actions.close(prompt_bufnr)
+    Log.error(('(%s.rename_project): Entry not available!'):format(MODSTR, prompt_bufnr))
+    return
+  end
+
+  require('project.popup').rename_input(
+    active_entry.value,
+    History.find_entry('recent', active_entry.value, 'name')
+  )
+  Log.debug(('(%s.rename_project): Refreshing prompt `%s`.'):format(MODSTR, prompt_bufnr))
+
+  State.get_current_picker(prompt_bufnr):refresh(
+    (function()
+      local results = History.get_recent_projects(true)
+      if Config.options.telescope.sort == 'newest' then
+        Log.debug(('(%s.rename_project): Sorting order to `newest`.'):format(MODSTR))
+        results = Util.reverse(results)
+      end
+      return Finders.new_table({
+        results = results,
+        entry_maker = function(value) ---@param value string|ProjectHistoryEntry
+          local name ---@type string
+          if History.legacy then
+            ---@cast value string
+            name = ('%s/%s'):format(
+              vim.fn.fnamemodify(value, ':h:t'),
+              vim.fn.fnamemodify(value, ':t')
+            )
+          else
+            ---@cast value ProjectHistoryEntry
+            name = value.name
+          end
+          local action_entry = { ---@class Project.ActionEntry
+            display = make_display,
+            name = name,
+            value = value,
+            ordinal = ('%s %s'):format(name, value),
+          }
+          return action_entry
+        end,
+      })
+    end)(),
+    { reset_prompt = true }
+  )
 end
 
 ---@param prompt_bufnr integer

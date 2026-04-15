@@ -347,6 +347,7 @@ By default, `setup()` loads with the following options:
     disable_file_picker = false,
     mappings = {
       n = {
+        R = 'rename_project',
         b = 'browse_project_files',
         d = 'delete_project',
         f = 'find_project_files',
@@ -358,6 +359,7 @@ By default, `setup()` loads with the following options:
         ['<C-b>'] = 'browse_project_files',
         ['<C-d>'] = 'delete_project',
         ['<C-f>'] = 'find_project_files',
+        ['<C-n>'] = 'rename_project',
         ['<C-r>'] = 'recent_project_files',
         ['<C-s>'] = 'search_in_project_files',
         ['<C-w>'] = 'change_working_directory',
