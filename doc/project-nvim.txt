@@ -23,7 +23,7 @@
 Table of Contents                                             *project-nvim.toc*
 
 
-1. project-nvim.setup                                       |project-nvim.setup|
+1. Setup                                                    |project-nvim.setup|
     1.1. `ProjectOpts`                                               |ProjectOpts|
     1.2. `ProjectOpts.LSP`                                       |ProjectOpts.LSP|
     1.3. `ProjectOpts.History`                               |ProjectOpts.History|
