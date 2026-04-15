@@ -391,16 +391,6 @@ Table of Contents                                             *project-nvim.toc*
                                 Default: `false` ~
 
 
-    • {show}                    (`'names'|'paths'`)
-                                Sets whether the picker shows the
-                                projects either by name (`'names'`)
-                                or path (`'paths'`)
-
-                                MIGRATED HISTORY ONLY! ~
-
-                                Default: `'paths'` ~
-
-
     • {sort}                    (`'newest'|'oldest'`)
                                 Determines whether the newest projects come
                                 first in the telescope picker (`'newest'`)
@@ -490,16 +480,6 @@ Table of Contents                                             *project-nvim.toc*
     • {opts}                    (`table`)
                                 Stores the setup options for the `snacks.nvim`
                                 picker
-
-
-    • {show}                    (`'names'|'paths'`)
-                                Sets whether the picker shows the
-                                projects either by name (`'names'`)
-                                or path (`'paths'`)
-
-                                MIGRATED HISTORY ONLY! ~
-
-                                Default: `'paths'` ~
 
 
 ------------------------------------------------------------------------------

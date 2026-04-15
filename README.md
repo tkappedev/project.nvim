@@ -305,13 +305,13 @@ By default, `setup()` loads with the following options:
     enabled = false,
     opts = {
       hidden = false,
+      -- icon = {},
+      layout = 'select',
+      -- path_icons = {},
+      show = 'paths', ---@type 'paths'|'names'
       sort = 'newest', ---@type 'newest'|'oldest'
       title = 'Select Project',
-      layout = 'select',
-      -- icon = {},
-      -- path_icons = {},
     },
-    show = 'paths', ---@type 'paths'|'names'
   },
   fzf_lua = {
     enabled = false,
@@ -364,7 +364,6 @@ By default, `setup()` loads with the following options:
       },
     },
     prefer_file_browser = false,
-    show = 'paths', ---@type 'paths'|'names'
     sort = 'newest', ---@type 'oldest'|'newest'
   },
 }
