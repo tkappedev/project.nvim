@@ -1,7 +1,4 @@
----@class Project.HistoryPath
----@field name string
----@field type string
----@field path string
+---@module 'project._meta'
 
 local MODSTR = 'project.health'
 local uv = vim.uv or vim.loop

@@ -1,3 +1,5 @@
+---@module 'project._meta'
+
 -- stylua: ignore start
 local uv     =  vim.uv or vim.loop
 local MODSTR = 'project.util.log'
@@ -7,11 +9,6 @@ local INFO   =  vim.log.levels.INFO   -- `2`
 local WARN   =  vim.log.levels.WARN   -- `3`
 local ERROR  =  vim.log.levels.ERROR  -- `4`
 -- stylua: ignore end
-
----@class Project.LogWin
----@field bufnr integer
----@field win integer
----@field tab integer
 
 local Util = require('project.util')
 local Config = require('project.config')

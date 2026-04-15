@@ -1,9 +1,4 @@
----@class Project.Popup.SelectChoices
----@field choices fun(): choices_dict: table<string, fun(...?: any)>
----@field choices_list fun(exit?: boolean): choices: string[]
-
----@class Project.Popup.SelectSpec: Project.Popup.SelectChoices
----@field callback fun(ctx?: vim.api.keyset.create_user_command.command_args)
+---@module 'project._meta'
 
 local MODSTR = 'project.popup'
 local ERROR = vim.log.levels.ERROR

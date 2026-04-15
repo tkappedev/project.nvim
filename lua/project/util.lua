@@ -1,9 +1,4 @@
----Non-legacy validation spec (>=v0.11)
----@class ValidateSpec
----@field [1] any
----@field [2] vim.validate.Validator
----@field [3]? boolean
----@field [4]? string
+---@module 'project._meta'
 
 local MODSTR = 'project.util'
 local ERROR = vim.log.levels.ERROR
@@ -103,6 +98,7 @@ end
 ---@overload fun(option: string|vim.wo|vim.bo, param: 'scope', param_value: 'local'|'global'): value: any
 ---@overload fun(option: string|vim.wo|vim.bo, param: 'ft', param_value: string): value: any
 ---@overload fun(option: string|vim.wo|vim.bo, param: 'buf'|'win', param_value: integer): value: any
+---@nodiscard
 function M.optget(option, param, param_value)
   M.validate({
     option = { option, { 'string' } },

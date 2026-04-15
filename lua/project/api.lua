@@ -3,17 +3,7 @@
 ---to avoid any confusions with naming,
 ---e.g. `require('project_nvim.project')`.
 
----@enum (key) ProjectPaths
-local project_paths = { ---@diagnostic disable-line:unused-local
-  datapath = 1,
-  historyfile = 1,
-  projectpath = 1,
-}
-
----@class HistoryPath
----@field datapath string
----@field projectpath string
----@field historyfile string
+---@module 'project._meta'
 
 local MODSTR = 'project.api'
 local ERROR = vim.log.levels.ERROR
@@ -28,9 +18,9 @@ local Log = require('project.util.log')
 ---The `project.nvim` API module.
 --- ---
 ---@class Project.API
----@field current_method string|nil
----@field current_project string|nil
----@field last_project string|nil
+---@field public current_method string|nil
+---@field public current_project string|nil
+---@field public last_project string|nil
 local Api = {}
 
 ---@class ProjectRootSwitch

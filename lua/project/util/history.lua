@@ -1,3 +1,5 @@
+---@module 'project._meta'
+
 local MODSTR = 'project.util.history'
 local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
@@ -6,15 +8,6 @@ local uv = vim.uv or vim.loop
 local Util = require('project.util')
 local Path = require('project.util.path')
 local Log = require('project.util.log')
-
----@class ProjectHistoryEntry
----@field name string
----@field path string
-
----@class Project.HistoryWin
----@field bufnr integer
----@field tab integer
----@field win integer
 
 ---@class Project.Util.History
 ---@field has_watch_setup? boolean

@@ -5,19 +5,21 @@ local Util = require('project.util')
 local Config = require('project.config')
 
 ---@class Project.Util.Path
+---@field private curr_dir_cache string[]
 ---The directory where the project dir will be saved.
 --- ---
 ---@field datapath? string
----The directory where the project history will be saved.
---- ---
----@field projectpath? string
 ---The project history file.
 --- ---
 ---@field historyfile? string
+---@field private last_dir_cache string
+---The directory where the project history will be saved.
+--- ---
+---@field projectpath? string
 local M = {}
 
-M.last_dir_cache = '' ---@type string
-M.curr_dir_cache = {} ---@type string[]
+M.last_dir_cache = ''
+M.curr_dir_cache = {}
 M.exists = Util.path_exists
 
 ---@param path string

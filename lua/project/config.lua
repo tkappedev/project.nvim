@@ -1,10 +1,8 @@
+---@module 'project._meta'
+
 local MODSTR = 'project.config'
 local ERROR = vim.log.levels.ERROR
 local Util = require('project.util')
-
----@class Project.ConfigLoc
----@field bufnr integer
----@field win integer
 
 ---@class Project.Config
 ---@field attach_augroup integer
@@ -33,10 +31,9 @@ function Config.setup(options)
   Config.options = Config.get_defaults().new(options or {})
 
   Config.detection_methods = Config.options:gen_methods()
-
   Config.options:expand_excluded()
-
   Config.options.exclude_dirs = vim.tbl_map(pattern_exclude, Config.options.exclude_dirs)
+
   Config.options:verify()
 
   ---CREDITS: https://github.com/ahmedkhalf/project.nvim/pull/111

@@ -1,17 +1,14 @@
+---@module 'project._meta'
+
 local uv = vim.uv or vim.loop
 local MODSTR = 'project.extensions.snacks'
 local Util = require('project.util')
 local Log = require('project.util.log')
 
 ---@class Project.Extensions.Snacks
+---@field config ProjectSnacksConfig
 local M = {}
 
----@class ProjectSnacksConfig
----@field title? string
----@field layout? 'default'|'select'|'vscode'
----@field icon? { icon: string, highlight: string }
----@field path_icons? { match: string, icon: string, highlight: string }[]
----@field sort? 'newest'|'oldest'
 M.config = {
   hidden = false,
   icon = { icon = ' ', highlight = 'Directory' },
