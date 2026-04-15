@@ -33,6 +33,18 @@ function M.delete_project(items)
   end
 end
 
+---@param items string[]
+function M.rename_project(items)
+  if vim.tbl_isempty(items) then
+    return
+  end
+
+  local History = require('project.util.history')
+  for _, item in ipairs(items) do
+    require('project.popup').rename_input(item, History.find_entry('recent', item, 'name'))
+  end
+end
+
 ---@param cb fun(entry?: string|number, cb?: function)
 function M.exec(cb)
   local projects = require('project.util.history').get_recent_projects() --[[@as ProjectHistoryEntry[]\]]
@@ -82,6 +94,10 @@ function M.run_fzf_lua()
       default = { M.default },
       ['ctrl-d'] = {
         M.delete_project,
+        Fzf.actions.resume,
+      },
+      ['ctrl-r'] = {
+        M.rename_project,
         Fzf.actions.resume,
       },
       ['ctrl-w'] = {
