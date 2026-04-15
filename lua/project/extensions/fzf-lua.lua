@@ -35,13 +35,14 @@ end
 
 ---@param cb fun(entry?: string|number, cb?: function)
 function M.exec(cb)
-  local results = Util.reverse(require('project.util.history').get_recent_projects(true))
-  if Config.options.fzf_lua.sort == 'oldest' then
-    results = Util.reverse(results)
+  local projects = require('project.util.history').get_recent_projects() --[[@as ProjectHistoryEntry[]\]]
+  if Config.options.fzf_lua.sort == 'newest' then
+    projects = Util.reverse(projects)
   end
-  for _, entry in ipairs(results) do
-    cb(entry)
+  for _, entry in ipairs(projects) do
+    cb(Config.options.fzf_lua.show == 'names' and entry.name or entry.path)
   end
+
   cb()
 end
 
@@ -59,9 +60,7 @@ function M.setup()
     {
       name = 'ProjectFzf',
       desc = 'Run an fzf-lua prompt for project.nvim',
-      callback = function()
-        M.run_fzf_lua()
-      end,
+      callback = M.run_fzf_lua,
     },
   })
 end
@@ -82,9 +81,7 @@ function M.run_fzf_lua()
     actions = {
       default = { M.default },
       ['ctrl-d'] = {
-        function(items)
-          M.delete_project(items)
-        end,
+        M.delete_project,
         Fzf.actions.resume,
       },
       ['ctrl-w'] = {

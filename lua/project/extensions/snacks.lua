@@ -13,12 +13,13 @@ local M = {}
 ---@field path_icons? { match: string, icon: string, highlight: string }[]
 ---@field sort? 'newest'|'oldest'
 M.config = {
-  title = 'Select Project',
-  layout = 'select',
-  icon = { icon = ' ', highlight = 'Directory' },
-  path_icons = {},
-  sort = 'newest',
   hidden = false,
+  icon = { icon = ' ', highlight = 'Directory' },
+  layout = 'select',
+  path_icons = {},
+  show = 'paths',
+  sort = 'newest',
+  title = 'Select Project',
 }
 
 ---@return snacks.picker.finder.Item[] items
@@ -29,12 +30,15 @@ function M.gen_items()
     recents = Util.reverse(recents)
   end
   for i, proj in ipairs(recents) do
-    local item = { ---@type snacks.picker.finder.Item
-      value = vim.fn.fnamemodify(proj, ':~'),
-      idx = i,
-      text = vim.fn.fnamemodify(proj, ':~'),
-      score = 0,
-    }
+    local text = '' ---@type string
+    if M.config.show == 'paths' then
+      text = vim.fn.fnamemodify(proj, ':~')
+    else
+      text = require('project.util.history').find_entry('recent', proj, 'name')
+    end
+
+    ---@type snacks.picker.finder.Item
+    local item = { value = vim.fn.fnamemodify(proj, ':~'), idx = i, text = text, score = 0 }
     table.insert(items, item)
   end
   return items

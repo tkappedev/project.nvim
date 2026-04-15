@@ -9,19 +9,37 @@ local Config = require('project.config')
 ---@field highlight? ProjectPickerItem.Hl[]
 ---@field value string
 
----@param source string[]
+---@param source string[]|ProjectHistoryEntry[]
 ---@return ProjectPickerItem[] items
 local function gen_items(source)
+  local History = require('project.util.history')
   local items = {} ---@type ProjectPickerItem[]
   local curr = require('project.api').get_current_project() or ''
   for i, v in ipairs(source) do
-    local is_curr = v == curr
-    local n_digits, max_n_digits = Util.digits(i), Util.digits(Config.options.historysize)
-    local path = ('%d. %s %s'):format(
+    local is_curr ---@type boolean
+    if History.legacy then
+      ---@cast v string
+      is_curr = v == curr
+    else
+      ---@cast v ProjectHistoryEntry
+      is_curr = v.path == curr
+    end
+
+    local n_digits, max_n_digits = Util.digits(i), Util.digits(Config.options.history.size)
+    local path = ('%d. %s'):format(
       i,
-      (is_curr and '*' or '') .. (' '):rep(max_n_digits - n_digits - (is_curr and 1 or 0)),
-      Util.rstrip('/', vim.fn.fnamemodify(v, ':~'))
+      (is_curr and '*' or '') .. (' '):rep(max_n_digits - n_digits - (is_curr and 1 or 0))
     )
+
+    if Config.options.picker.show == 'names' and not History.legacy then
+      ---@cast v ProjectHistoryEntry
+      path = ('%s %s'):format(path, v.name)
+    else
+      path = ('%s %s'):format(
+        path,
+        Util.rstrip('/', vim.fn.fnamemodify(History.legacy and v or v.path, ':~'))
+      )
+    end
     local hl = { { 0, n_digits + 1, 'Number' } } ---@type ProjectPickerItem.Hl[]
     if is_curr then
       table.insert(hl, { n_digits + 2, n_digits + 3, 'Special' })
@@ -31,7 +49,7 @@ local function gen_items(source)
     end
 
     table.insert(items, {
-      value = Util.rstrip('/', vim.fn.fnamemodify(v, ':p')),
+      value = Util.rstrip('/', vim.fn.fnamemodify(History.legacy and v or v.path, ':p')),
       str = path,
       highlight = hl,
     })
@@ -44,7 +62,7 @@ local M = {}
 
 ---@return ProjectPickerItem[] items
 function M.get()
-  local recents = require('project').get_recent_projects(true)
+  local recents = require('project').get_recent_projects()
   if Config.options.picker.sort == 'newest' then
     recents = Util.reverse(recents)
   end
