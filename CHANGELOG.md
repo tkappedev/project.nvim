@@ -1,5 +1,9 @@
 # Changelog
 
+## [v3.0.1-1](https://github.com/DrKJeff16/project.nvim/tree/v3.0.1-1) (2026-04-15)
+
+[Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v3.0.0-1...v3.0.1-1)
+
 ## [v3.0.0-1](https://github.com/DrKJeff16/project.nvim/tree/v3.0.0-1) (2026-04-14)
 
 [Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v2.0.0-1...v3.0.0-1)
