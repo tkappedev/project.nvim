@@ -218,6 +218,14 @@ Table of Contents                                             *project-nvim.toc*
                                 Default: `'global'` ~
 
 
+    • {show_by_name}            (`boolean`)
+                                When using the native UI, setting this to `true`
+                                will show your projects by their name
+                                instead of their path
+
+                                Default: `false` ~
+
+
     • {show_hidden}             (`boolean`)
                                 Make hidden files visible when using
                                 any picker

@@ -287,6 +287,7 @@ By default, `setup()` loads with the following options:
     notify = true, -- Notify the user when a project with a different owner is found
   },
   enable_autochdir = false,
+  show_by_name = false,
   show_hidden = false,
   exclude_dirs = {},
   silent_chdir = true,
