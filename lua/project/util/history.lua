@@ -485,15 +485,14 @@ function M.deserialize_history(history_data, name_data)
   local projects = {} ---@type string[]|ProjectHistoryEntry[]
   local i = 1
   for s in history_data:gmatch('[^\r\n]+') do
-    local entry = name_data and {} or '' ---@type string|ProjectHistoryEntry
+    local entry ---@type string|ProjectHistoryEntry
     if not Path.is_excluded(s) and Path.exists(s) then
       if not name_data then
         ---@cast entry string
         entry = s
       else
         ---@cast entry ProjectHistoryEntry
-        entry.path = s
-        entry.name = name_data[i]
+        entry = { path = s, name = name_data[i] }
       end
       table.insert(projects, entry)
     end
@@ -781,8 +780,9 @@ function M.find_entry(search, value, key)
     return
   end
 
+  M.read_history()
   if not M.recent_projects then
-    M.read_history()
+    return
   end
 
   local tbl = search == 'session' and M.session_projects or M.recent_projects --[[@as ProjectHistoryEntry[]\]]
