@@ -2,6 +2,8 @@
 
 local WARN = vim.log.levels.WARN
 local ERROR = vim.log.levels.ERROR
+local INFO = vim.log.levels.INFO
+local uv = vim.uv or vim.loop
 local Util = require('project.util')
 local Popup = require('project.popup')
 local History = require('project.util.history')
@@ -47,12 +49,12 @@ end
 
 ---@class Project.Commands
 ---@field cmds table<string, Project.CMD>
-local Commands = {}
+local M = {}
 
-Commands.cmds = {}
+M.cmds = {}
 
 ---@param specs Project.Commands.Spec[]
-function Commands.new(specs)
+function M.new(specs)
   Util.validate({ specs = { specs, { 'table' } } })
   if vim.tbl_isempty(specs) or not vim.islist(specs) then
     error('Invalid command spec!', ERROR)
@@ -82,7 +84,8 @@ function Commands.new(specs)
       T.complete = spec.complete
       opts.complete = spec.complete
     end
-    Commands.cmds[name] = setmetatable({}, {
+
+    M.cmds[name] = setmetatable({}, {
       __index = function(_, k) ---@param k string
         return T[k]
       end,
@@ -98,13 +101,13 @@ function Commands.new(specs)
       end,
     })
     vim.api.nvim_create_user_command(name, function(ctx)
-      Commands.cmds[name](ctx)
+      M.cmds[name](ctx)
     end, opts)
   end
 end
 
-function Commands.create_user_commands()
-  Commands.new({
+function M.create_user_commands()
+  M.new({
     {
       name = 'Project',
       desc = 'Run the main project.nvim UI',
@@ -261,16 +264,17 @@ function Commands.create_user_commands()
           return {}
         end
 
+        -- Thanks to @TheLeoP for the advice!
+        -- https://www.reddit.com/r/neovim/comments/1pvl1tb/comment/nvwzvvu/
         if #args == 2 then
-          -- Thanks to @TheLeoP for the advice!
-          -- https://www.reddit.com/r/neovim/comments/1pvl1tb/comment/nvwzvvu/
           return vim.fn.getcompletion(args[2], 'file', true)
         end
+
         if #args == 3 then
           ---@type string[]
           local nums = vim.tbl_map(function(value) ---@param value integer
             return tostring(value)
-          end, Util.range(0, 32))
+          end, Util.range(0, 32, 2))
           if args[3] == '' then
             return nums
           end
@@ -314,20 +318,29 @@ function Commands.create_user_commands()
       name = 'ProjectHistory',
       desc = 'Manage project history',
       bang = true,
-      nargs = '?',
+      nargs = '*',
       complete = function(_, line)
         local args = vim.split(line, '%s+', { trimempty = false })
-        if (args[1]:sub(-1) == '!' and #args == 1) or #args > 2 then
+        if args[1]:sub(-1) == '!' and #args == 1 then
           return {}
         end
 
-        local res = {}
-        for _, choice in ipairs({ 'clear', 'migrate' }) do
-          if vim.startswith(choice, args[2]) then
-            table.insert(res, choice)
+        if #args == 2 then
+          local res = {} ---@type string[]
+          local options = { 'clear' } ---@type string[]
+          table.insert(options, History.legacy and 'migrate' or 'rename')
+
+          for _, choice in ipairs(options) do
+            if vim.startswith(choice, args[2]) then
+              table.insert(res, choice)
+            end
           end
+          return res
         end
-        return res
+        if #args > 2 and args[2] == 'rename' then
+          return complete_items(_, line)
+        end
+        return {}
       end,
       callback = function(ctx)
         ctx.fargs[1] = ctx.fargs[1] or ''
@@ -336,23 +349,45 @@ function Commands.create_user_commands()
           return
         end
 
-        if not vim.list_contains({ 'clear', 'migrate' }, ctx.fargs[1]) or #ctx.fargs > 1 then
+        local options = { 'clear' } ---@type string[]
+        table.insert(options, History.legacy and 'migrate' or 'rename')
+
+        if not vim.list_contains(options, ctx.fargs[1]) or #ctx.fargs > 1 then
           vim.notify('Usage:  `:ProjectHistory[!] [clear]`', WARN)
           return
         end
 
         if ctx.fargs[1] == 'clear' then
           History.clear_historyfile(ctx.bang)
+          return
         end
 
-        History.migrate()
+        if ctx.fargs[1] == 'migrate' then
+          History.migrate()
+          return
+        end
+
+        if #ctx.fargs == 1 then
+          Popup.rename_menu()
+          return
+        end
+
+        for i = 2, #ctx.fargs, 1 do
+          if not Popup.rename_input(ctx.fargs[i]) then
+            vim.notify(
+              ('(ProjectHistory): Unable to rename project `%s`!'):format(ctx.fargs[i]),
+              ERROR
+            )
+            return
+          end
+        end
       end,
     },
     {
       name = 'ProjectImport',
       desc = 'Import project history from JSON file',
       bang = true,
-      nargs = '*',
+      nargs = '?',
       complete = 'file',
       callback = function(ctx)
         if vim.tbl_isempty(ctx.fargs) then
@@ -361,11 +396,7 @@ function Commands.create_user_commands()
         end
         vim.print(ctx.fargs)
 
-        if #ctx.fargs == 1 then
-          History.import_history_json(ctx.fargs[1], ctx.bang)
-        end
-
-        vim.notify('Usage:  `:ProjectImport[!] </path/to/file[.json]>`', WARN)
+        History.import_history_json(ctx.fargs[1], ctx.bang)
       end,
     },
     {
@@ -377,25 +408,16 @@ function Commands.create_user_commands()
     },
     {
       name = 'ProjectRename',
-      desc = 'Rename a project from your history',
+      bang = true,
       nargs = '*',
-      complete = complete_items,
-      callback = function(ctx)
-        if History.legacy then
-          return
-        end
-
-        if vim.tbl_isempty(ctx.fargs) then
-          Popup.rename_menu()
-          return
-        end
-
-        for _, proj in ipairs(ctx.fargs) do
-          if not Popup.rename_input(Util.rstrip('/', vim.fn.fnamemodify(proj, ':p'))) then
-            vim.notify(('(ProjectRename): Unable to rename project `%s`!'):format(proj), ERROR)
-            return
-          end
-        end
+      desc = 'Deprecated command',
+      callback = function()
+        vim.notify(
+          [[
+This command has been deprecated, use `:ProjectHistory rename [...]` instead.
+        ]],
+          WARN
+        )
       end,
     },
     {
@@ -403,9 +425,17 @@ function Commands.create_user_commands()
       desc = 'Sets the current project root to the current cwd',
       bang = true,
       callback = function(ctx)
+        local old_cwd = uv.cwd() or vim.fn.getcwd()
         Api.on_buf_enter()
+
+        local cwd = uv.cwd() or vim.fn.getcwd()
+        if cwd == old_cwd then
+          vim.notify('(ProjectRoot): Current project is already recorded!', WARN)
+          return
+        end
+
         if ctx and ctx.bang then
-          vim.notify(vim.fn.getcwd(0, 0))
+          vim.notify(uv.cwd() or vim.fn.getcwd(), INFO)
         end
       end,
     },
@@ -420,5 +450,5 @@ function Commands.create_user_commands()
   })
 end
 
-return Commands
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

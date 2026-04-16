@@ -43,6 +43,7 @@ local DEFAULTS = { ---@type ProjectDefaults
   before_attach = nil,
   on_attach = nil,
   enable_autochdir = false,
+  show_by_name = false,
   show_hidden = false,
   exclude_dirs = {},
   silent_chdir = true,
@@ -348,13 +349,6 @@ end
 ---Verify config integrity.
 --- ---
 function DEFAULTS:verify()
-  local keys = vim.tbl_keys(DEFAULTS) ---@type string[]
-  for k, _ in pairs(self) do
-    if not vim.list_contains(keys, k) then
-      self[k] = nil
-    end
-  end
-
   Util.validate({
     before_attach = { self.before_attach, { 'function', 'nil' }, true },
     different_owners = { self.different_owners, { 'table', 'nil' }, true },
@@ -370,6 +364,7 @@ function DEFAULTS:verify()
     patterns = { self.patterns, { 'table', 'nil' }, true },
     picker = { self.picker, { 'table', 'nil' }, true },
     scope_chdir = { self.scope_chdir, { 'string', 'nil' }, true },
+    show_by_name = { self.show_by_name, { 'boolean', 'nil' }, true },
     show_hidden = { self.show_hidden, { 'boolean', 'nil' }, true },
     silent_chdir = { self.silent_chdir, { 'boolean', 'nil' }, true },
     snacks = { self.snacks, { 'table', 'nil' }, true },
@@ -384,6 +379,13 @@ function DEFAULTS:verify()
   self:verify_owners()
   self:verify_lists()
   self:verify_fzf_lua()
+
+  local keys = vim.tbl_keys(DEFAULTS) --[[@as string[]\]]
+  for k, _ in pairs(self) do
+    if not vim.list_contains(keys, k) then
+      self[k] = nil
+    end
+  end
 
   if not self.detection_methods then ---@diagnostic disable-line:undefined-field
     return

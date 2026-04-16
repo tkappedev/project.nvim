@@ -344,7 +344,7 @@ end
 function M.reverse(T)
   M.validate({ T = { T, { 'table' } } })
 
-  if vim.tbl_isempty(T) then
+  if vim.tbl_isempty(T) or #T == 1 then
     return T
   end
 

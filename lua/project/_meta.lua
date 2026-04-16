@@ -466,6 +466,14 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---Default: `'global'`
 --- ---
 ---@field scope_chdir? ProjectOpts.ScopeChdir
+---If `true`, the native plugin UI will list projects using their names
+---instead of their paths.
+---
+---Note that if you haven't migrated your history, this will be ignored.
+--- ---
+---Default: `false`
+--- ---
+---@field show_by_name? boolean
 ---Make hidden files visible when using any picker.
 --- ---
 ---Default: `false`
@@ -500,11 +508,11 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---@field log ProjectDefaults.Logging
 ---@field lsp ProjectDefaults.LSP
 ---@field manual_mode boolean
----@field new fun(opts?: ProjectOpts): defaults: ProjectDefaults
 ---@field on_attach nil|fun(dir: string, method: string)
 ---@field patterns string[]
 ---@field picker ProjectDefaults.Picker
 ---@field scope_chdir ProjectOpts.ScopeChdir
+---@field show_by_name boolean
 ---@field show_hidden boolean
 ---@field silent_chdir boolean
 ---@field snacks ProjectDefaults.Snacks
@@ -518,6 +526,11 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---@field verify_lsp fun(self: ProjectDefaults)
 ---@field verify_owners fun(self: ProjectDefaults)
 ---@field verify_scope_chdir fun(self: ProjectDefaults)
+local D = {}
+
+---@param opts? ProjectOpts
+---@return ProjectDefaults defaults
+function D:new(opts) end
 
 ---@class Project.ConfigLoc
 ---@field bufnr integer

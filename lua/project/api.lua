@@ -98,15 +98,13 @@ function Api.get_last_project(entry)
     entry = false
   end
 
-  local recent = History.get_recent_projects()
+  local recent = Util.reverse(History.get_recent_projects())
   if vim.tbl_isempty(recent) or #recent == 1 then
     return
   end
 
-  recent = Util.reverse(recent)
-
   local res = #History.session_projects <= 1 and recent[2] or recent[1]
-  if Util.is_type('string', res) then
+  if History.legacy then
     ---@cast res string
     return res
   end
@@ -330,16 +328,26 @@ function Api.set_pwd(dir, method)
     ok = pcall(vim.cmd.lchdir, dir)
     msg = ('%s\nlchdir: `%s`:'):format(msg, dir)
   end
+
   msg = ('%s\nMethod: %s\nStatus: %s'):format(msg, method, (ok and 'SUCCESS' or 'FAILED'))
+
   if ok then
     Api.current_project = dir
     Api.current_method = method
 
     Log.info(msg)
+    local on_attach = function() end
     if Config.options.on_attach then
-      Config.options.on_attach(dir, method)
+      on_attach = vim.schedule_wrap(function()
+        Config.options.on_attach(dir, method)
+      end)
       Log.debug('Ran `on_attach` hook successfully.')
     end
+
+    on_attach()
+
+    Log.debug(('Changed directory to `%s` using method `%s`'):format(dir, method))
+    History.write_history()
   else
     Log.error(msg)
   end
@@ -348,11 +356,6 @@ function Api.set_pwd(dir, method)
     vim.schedule(function()
       vim.notify(msg, (ok and INFO or ERROR))
     end)
-  end
-
-  if ok then
-    Log.debug(('Changed directory to `%s` using method `%s`'):format(dir, method))
-    History.write_history()
   end
   return ok
 end
@@ -373,7 +376,7 @@ function Api.get_project_root(bufnr)
   end
 
   local roots = {} ---@type { root: string, method_msg: string, method: 'lsp'|'pattern' }[]
-  local root, method = nil, nil
+  local root, method = nil, nil ---@type string|nil, string|nil
   local ops = vim.tbl_keys(SWITCH) ---@type ('lsp'|'pattern')[]
   local success = false
   for _, m in ipairs(Config.detection_methods) do
@@ -389,6 +392,7 @@ function Api.get_project_root(bufnr)
   if vim.tbl_isempty(roots) then
     return
   end
+
   if #roots == 1 or Config.options.lsp.no_fallback then
     return roots[1].root, roots[1].method_msg
   end

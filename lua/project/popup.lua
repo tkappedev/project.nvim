@@ -349,7 +349,7 @@ M.rename_menu = M.select.new({
     )
   end,
   choices_list = function()
-    local recents = Util.reverse(require('project.util.history').get_recent_projects(true))
+    local recents = Util.reverse(require('project.util.history').get_recent_projects(true, true))
     table.insert(recents, 'Exit')
     return recents
   end,

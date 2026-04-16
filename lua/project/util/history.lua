@@ -32,13 +32,12 @@ function M.migrate()
 
   M.read_history()
 
-  local old_recents = vim.deepcopy(M.recent_projects or {})
-  local recents_migrated = false
+  local old_recents, recents_migrated = vim.deepcopy(M.recent_projects or {}), false
   if M.recent_projects and Util.same_type_list(M.recent_projects, 'string') then
     for i, v in ipairs(M.recent_projects) do
       M.recent_projects[i] = {
         path = v,
-        name = vim.fn.fnamemodify(v, ':p:h:h:t') .. '/' .. vim.fn.fnamemodify(v, ':p:h:t'),
+        name = ('%s/%s'):format(vim.fn.fnamemodify(v, ':p:h:h:t'), vim.fn.fnamemodify(v, ':p:h:t')),
       }
     end
 
@@ -735,9 +734,7 @@ function M.is_legacy(data)
   for _, entry in ipairs(data) do
     if is_legacy == nil then
       is_legacy = Util.is_type('string', entry)
-    end
-
-    if is_legacy then
+    elseif is_legacy then
       ---@cast entry string
       Util.validate({ entry = { entry, { 'string' } } })
     else
@@ -782,6 +779,10 @@ function M.find_entry(search, value, key)
     )
   then
     return
+  end
+
+  if not M.recent_projects then
+    M.read_history()
   end
 
   local tbl = search == 'session' and M.session_projects or M.recent_projects --[[@as ProjectHistoryEntry[]\]]
