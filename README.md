@@ -75,6 +75,7 @@ You can check some sample videos in [`EXAMPLES.md`](https://github.com/DrKJeff16
   - [`:ProjectImport`](#projectimport)
   - [`:ProjectLog`](#projectlog)
   - [`:ProjectPicker`](#projectpicker)
+  - [`:ProjectRecents`](#projectrecents)
   - [`:ProjectRoot`](#projectroot)
   - [`:ProjectSession`](#projectsession)
   - [`:ProjectTelescope`](#projecttelescope)
@@ -835,6 +836,13 @@ then a selected project will show hidden files.
 This is an alias for `:Picker project`.
 
 See [_`picker.nvim` Integration_](#pickernvim) for more info.
+
+### `:ProjectRecents`
+
+The `:ProjectRecents` command will open a UI window showing you the list of your recently used
+projects.
+
+See [_`commands.lua`_](https://github.com/DrKJeff16/project.nvim/blob/main/lua/project/commands.lua) for more info.
 
 ### `:ProjectRoot`
 
