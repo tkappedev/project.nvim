@@ -157,12 +157,5 @@ function M.add_root_patterns(patterns)
   end
 end
 
-local Project = setmetatable(M, { ---@type Project
-  __index = M,
-  __newindex = function()
-    vim.notify('Project module is Read-Only!', vim.log.levels.ERROR)
-  end,
-})
-
-return Project
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:
