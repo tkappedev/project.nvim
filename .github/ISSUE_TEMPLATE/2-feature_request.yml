@@ -7,30 +7,17 @@ labels:
 assignees:
   - DrKJeff16
 body:
-  - type: checkboxes
+  - type: textarea
     attributes:
-      label: Did you check the docs and looked for existing issues?
-      description: Tick all the checkboxes below to validate your issue
-      options:
-        - label: I have read the docs (`README.md`, `:h project-nvim`, etc.)
-          required: true
-        - label: I have checked for existing issues related to this one, whether open or closed
-          required: true
-  - type: input
-    attributes:
-      label: Operating System and, if possible, what version?
-      placeholder: Linux 6.15.6-arch1-1
+      label: Description
+      description: |
+        Write down, as detailed as you can, what is it that you wish to be implemented.
+        Be as concise as possible, and give the necessary context.
     validations:
       required: true
   - type: textarea
     attributes:
-      label: What would you like integrated?
-      description: Write down, as detailed as you can, what is it that you'd like integrated.
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: How would this plugin improve?
+      label: Potential Improvements
       description: |
         Describe clearly how would this plugin benefit from your suggestion
         and what kinds of users, if applicable.
@@ -38,8 +25,9 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Are there any bug issues this new feature could fix?
-      description: If applicable, please link any issue that your suggestion could fix.
+      label: Related Issues
+      description: |
+        If applicable, please list the issue(s) that your suggestion could fix.
       placeholder: |
         - #1
         - #2
@@ -48,14 +36,17 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: Have you considered alternative solutions?
-      description: Please describe any alternative solutions you have considered, if applicable.
+      label: Alternative Solutions
+      description: |
+        Please describe any alternative solutions you have considered, if applicable.
     validations:
       required: false
   - type: textarea
     attributes:
-      label: Is there any code implementation you'd suggest?
-      description: If you can, please include your solution in Lua code.
+      label: Code Implementation
+      description: |
+        If possible, please include your solution in Lua code.
+        You will be credited if so.
       value: |
         -- LEAVE THIS UNCHANGED IF THERE IS NO CODE YOU CAN INCLUDE
         require('project.foo').bar()
@@ -65,7 +56,36 @@ body:
   - type: textarea
     attributes:
       label: Additional Context
-      description: If there's more info you could tell, please do. Screenshots too, if applicable.
+      description: |
+        If there's more info you could tell, please do. Add screenshots too, if applicable.
     validations:
       required: false
+  - type: markdown
+    attributes:
+      value: |
+        ---
+  - type: checkboxes
+    attributes:
+      label: Issue Checks
+      options:
+        - label: I have read the docs (`README.md`, `:h project-nvim`, etc.)
+          required: true
+        - label: I have checked for existing issues related to this one, whether open or closed
+          required: true
+  - type: input
+    attributes:
+      label: Operating System
+      description: |
+        Please indicate your OS. Add the version if applicable.
+      placeholder: Linux 6.15.6-arch1-1
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Neovim Version
+      description: |
+        Paste the output of `nvim -v | head -n 1 | cut -d ' ' -f2-`.
+      placeholder: v0.12.0-dev-839+ga08d6a8ac1
+    validations:
+      required: true
 # vim: set ts=2 sts=2 sw=2 et ai si sta:

@@ -1,6 +1,8 @@
 name: Bug Report
-description: State if something is wrong
 title: "[BUG] <TITLE>"
+description: State if something is wrong
+projects:
+  - "DrKJeff16/6"
 labels:
   - bug
   - important
@@ -8,10 +10,68 @@ labels:
 assignees:
   - DrKJeff16
 body:
+  - type: textarea
+    attributes:
+      label: Description
+      description: |
+        Write down what happened, as detailed as you can. Avoid irrelevant info!
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: |
+        Describe clearly what were you expecting to occur.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps To Reproduce
+      description: |
+        Please list the steps to reproduce the behavior.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+        ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional Information
+      description: |
+        If there's more info you could tell, please do. Add screenshots too, if applicable.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Plugin Setup
+      description: |
+        If the plugin itself is causing an issue
+        please paste the relevant code snippet showing how you configured this plugin.
+      value: |
+        require('project_nvim').setup()
+      render: lua
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Health Check
+      description: |
+        If you can run `:checkhealth project`, please paste the output below.
+      placeholder: "<PASTE HERE IF POSSIBLE>"
+      render:
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        ---
   - type: checkboxes
     attributes:
       label: Issue Checks
-      description: Make sure to read every checkbox and answer truthfully!
+      description: |
+        Make sure to read every checkbox and answer truthfully.
       options:
         - label: I am running on the latest version of `project.nvim`
           required: true
@@ -21,8 +81,9 @@ body:
           required: true
   - type: checkboxes
     attributes:
-      label: What does the problem you encountered relate to?
-      description: "Check one or more types of concepts your issue relates to:"
+      label: Issue Type
+      description: |
+        What does your issue relate to? Select one at least!
       options:
         - label: The plugin is not detecting directories correctly
           required: false
@@ -48,63 +109,18 @@ body:
           required: false
   - type: input
     attributes:
-      label: What Neovim version are you using?
-      description: Paste the output of `nvim -v | head -n 1 | cut -d ' ' -f2-`.
-      placeholder: v0.12.0-dev-839+ga08d6a8ac1
+      label: Operating System
+      description: |
+        Please indicate your OS. Add the version if applicable.
+      placeholder: Linux 6.15.6-arch1-1
     validations:
       required: true
   - type: input
     attributes:
-      label: Operating system and, if possible, what version?
-      placeholder: Linux 6.15.6-arch1-1
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Describe the bug
-      description: Write down what happened, as detailed as you can. Avoid irrelevant info.
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Expected Behavior
-      description: Describe clearly what were you expecting to occur.
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Steps To Reproduce
-      description: Steps to reproduce the behavior.
-      placeholder: |
-        1. ...
-        2. ...
-        3. ...
-        ...
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Output of `:checkhealth project`
-      description: If you can run `:checkhealth project`, please paste the output below.
-      placeholder: "<PASTE HERE IF POSSIBLE>"
-      render:
-    validations:
-      required: false
-  - type: textarea
-    attributes:
-      label: How did you setup the plugin?
+      label: Neovim Version
       description: |
-        If the plugin itself is causing an issue
-        please paste the relevant code snippet showing how you configured this plugin.
-      value: |
-        require('project_nvim').setup()
-      render: lua
+        Paste the output of `nvim -v | head -n 1 | cut -d ' ' -f2-`.
+      placeholder: v0.12.0-dev-839+ga08d6a8ac1
     validations:
-      required: false
-  - type: textarea
-    attributes:
-      label: Additional Info and/or Screenshots
-      description: If there's more info you could tell, please do. Screenshots too, if applicable.
-    validations:
-      required: false
+      required: true
 # vim: set ts=2 sts=2 sw=2 et ai si sta:
