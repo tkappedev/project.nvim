@@ -462,6 +462,12 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---Table of options used for the `picker.nvim` integration
 --- ---
 ---@field picker? ProjectOpts.Picker
+---If enabled, the project list will automatically wipe any history entries
+---with a missing/invalid path.
+--- ---
+---Default: `true`
+--- ---
+---@field remove_missing_dirs? boolean
 ---Determines the scope for changing the directory.
 ---
 ---Valid options are:
@@ -517,6 +523,7 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---@field on_attach nil|fun(dir: string, method: string)
 ---@field patterns string[]
 ---@field picker ProjectDefaults.Picker
+---@field remove_missing_dirs boolean
 ---@field scope_chdir ProjectOpts.ScopeChdir
 ---@field show_by_name boolean
 ---@field show_hidden boolean

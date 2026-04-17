@@ -22,7 +22,6 @@ local DEFAULTS = { ---@type ProjectDefaults
     },
   },
   lsp = { enabled = true, ignore = {}, no_fallback = false, use_pattern_matching = false },
-  manual_mode = false,
   patterns = {
     '.git',
     '.github',
@@ -42,6 +41,8 @@ local DEFAULTS = { ---@type ProjectDefaults
   },
   before_attach = nil,
   on_attach = nil,
+  manual_mode = false,
+  remove_missing_dirs = true,
   enable_autochdir = false,
   show_by_name = false,
   show_hidden = false,

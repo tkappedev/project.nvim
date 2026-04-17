@@ -498,19 +498,23 @@ function M.deserialize_history(history_data, name_data)
   })
   name_data = (name_data and not vim.tbl_isempty(name_data)) and name_data or nil
 
+  local Config = require('project.config')
   local projects = {} ---@type string[]|ProjectHistoryEntry[]
   local i = 1
   for s in history_data:gmatch('[^\r\n]+') do
     local entry ---@type string|ProjectHistoryEntry
-    if not Path.is_excluded(s) and Path.exists(s) then
+    if not Path.is_excluded(s) then
       if not name_data then
-        ---@cast entry string
-        entry = s
+        entry = s --[[@as string]]
       else
-        ---@cast entry ProjectHistoryEntry
-        entry = { path = s, name = name_data[i] }
+        entry = { path = s, name = name_data[i] } --[[@as ProjectHistoryEntry]]
       end
-      table.insert(projects, entry)
+      if
+        (Config.options.remove_missing_dirs and Path.exists(s))
+        or not Config.options.remove_missing_dirs
+      then
+        table.insert(projects, entry)
+      end
     end
 
     i = i + 1
