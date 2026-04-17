@@ -52,6 +52,7 @@ You can check some sample videos in [`EXAMPLES.md`](https://github.com/DrKJeff16
   - [`pckr.nvim`](#pckrnvim)
   - [`nvim-plug`](#nvim-plug)
   - [`paq-nvim`](#paq-nvim)
+  - [`vim.pack`](#vimpack)
   - [LuaRocks](#luarocks)
 - [Configuration](#configuration)
   - [Defaults](#defaults)
@@ -228,6 +229,14 @@ paq({
   'wsdjeg/picker.nvim',
   'folke/snacks.nvim',
   'ibhagwan/fzf-lua',
+})
+```
+
+### `vim.pack`
+
+```lua
+vim.pack.add({
+  { src = 'https://github.com/DrKJeff16/project.nvim', name = 'project.nvim' },
 })
 ```
 
