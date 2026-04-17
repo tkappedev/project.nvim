@@ -71,10 +71,8 @@ local DEFAULTS = { ---@type ProjectDefaults
   fzf_lua = { enabled = false, sort = 'newest', show = 'paths' },
   log = { enabled = false, max_size = 1.1, logpath = vim.fn.stdpath('state') },
   telescope = {
-    sort = 'newest',
-    show = 'paths',
-    prefer_file_browser = false,
     disable_file_picker = false,
+    prefer_file_browser = false,
     mappings = {
       n = {
         R = 'rename_project',
@@ -95,6 +93,9 @@ local DEFAULTS = { ---@type ProjectDefaults
         ['<C-w>'] = 'change_working_directory',
       },
     },
+    show = 'paths',
+    sort = 'newest',
+    tilde = false,
   },
 }
 

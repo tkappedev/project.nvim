@@ -19,6 +19,15 @@ local Entry_display = require('telescope.pickers.entry_display')
 ---@class Project.Telescope.Util
 local M = {}
 
+---@param s string
+---@return string tilde_str
+function M.make_tilde(s)
+  Util.validate({ s = { s, { 'string' } } })
+
+  local Config = require('project.config')
+  return Util.rstrip('/', vim.fn.fnamemodify(s, Config.options.telescope.tilde and ':p:~' or ':p'))
+end
+
 ---@param entry { name: string, value: string, display: function, index: integer, ordinal: string }
 function M.make_display(entry)
   Log.debug(
@@ -55,8 +64,8 @@ function M.create_finder()
       return {
         display = M.make_display,
         name = name,
-        value = History.legacy and entry or entry.path,
-        ordinal = ('%s %s'):format(name, History.legacy and entry or entry.path),
+        value = M.make_tilde(History.legacy and entry or entry.path),
+        ordinal = ('%s %s'):format(name, M.make_tilde(History.legacy and entry or entry.path)),
       }
     end,
   })

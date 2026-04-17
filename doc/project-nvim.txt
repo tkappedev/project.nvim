@@ -409,6 +409,13 @@ Table of Contents                                             *project-nvim.toc*
                                 Default: `'newest'` ~
 
 
+    • {tilde}                   (`boolean`)
+                                Determines whether the project paths will be
+                                abbreviated with a `~` for HOME or not
+
+                                Default: `false` ~
+
+
 ------------------------------------------------------------------------------
 1.6. `ProjectOpts.FzfLua`                                     *ProjectOpts.FzfLua*
                                                    *project-nvim.fzf-lua-config*

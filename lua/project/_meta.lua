@@ -238,12 +238,18 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---Default: `'newest'`
 --- ---
 ---@field sort? ProjectOpts.Sort
+---Determines whether the project paths will be abbreviated with a `~` for HOME or not.
+--- ---
+---Default: `false`
+--- ---
+---@field tilde? boolean
 
 ---@class ProjectDefaults.Telescope: ProjectOpts.Telescope
 ---@field disable_file_picker boolean
 ---@field mappings Project.Telescope.DefaultMappings
 ---@field prefer_file_browser boolean
 ---@field sort ProjectOpts.Sort
+---@field tilde boolean
 
 ---Options for logging utility.
 --- ---

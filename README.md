@@ -370,6 +370,7 @@ By default, `setup()` loads with the following options:
     },
     prefer_file_browser = false,
     sort = 'newest', ---@type 'oldest'|'newest'
+    tilde = false,
   },
 }
 ```

@@ -23,6 +23,7 @@ local Api = require('project.api')
 local Config = require('project.config')
 local Util = require('project.util')
 local make_display = require('telescope._extensions.projects.util').make_display
+local make_tilde = require('telescope._extensions.projects.util').make_tilde
 
 ---@class Project.Telescope.Actions
 local M = {}
@@ -37,18 +38,18 @@ M.help_mappings = Generate.which_key({
 
 ---@param prompt_bufnr integer
 function M.delete_project(prompt_bufnr)
-  local active_entry = State.get_selected_entry() ---@type Project.ActionEntry
+  local active_entry = State.get_selected_entry() ---@type Project.ActionEntry|nil
   if not active_entry then
     Actions.close(prompt_bufnr)
     Log.error(('(%s.delete_project): Entry not available!'):format(MODSTR, prompt_bufnr))
     return
   end
 
-  History.delete_project(active_entry.value, true)
+  History.delete_project(Util.rstrip('/', vim.fn.fnamemodify(active_entry.value, ':p')), true)
   Log.debug(('(%s.delete_project): Refreshing prompt `%s`.'):format(MODSTR, prompt_bufnr))
   State.get_current_picker(prompt_bufnr):refresh(
     (function()
-      local results = History.get_recent_projects(true)
+      local results = History.get_recent_projects()
       if Config.options.telescope.sort == 'newest' then
         Log.debug(('(%s.delete_project): Sorting order to `newest`.'):format(MODSTR))
         results = Util.reverse(results)
@@ -70,8 +71,8 @@ function M.delete_project(prompt_bufnr)
           local action_entry = { ---@class Project.ActionEntry
             display = make_display,
             name = name,
-            value = History.legacy and value or value.path,
-            ordinal = ('%s %s'):format(name, History.legacy and value or value.path),
+            value = make_tilde(History.legacy and value or value.path),
+            ordinal = ('%s %s'):format(name, make_tilde(History.legacy and value or value.path)),
           }
           return action_entry
         end,
@@ -158,51 +159,13 @@ end
 ---@param prompt_bufnr integer
 function M.rename_project(prompt_bufnr)
   local active_entry = State.get_selected_entry() ---@type Project.ActionEntry
-  if not active_entry then
-    Actions.close(prompt_bufnr)
-    Log.error(('(%s.rename_project): Entry not available!'):format(MODSTR, prompt_bufnr))
-    return
-  end
+  Actions.close(prompt_bufnr)
 
   require('project.popup').rename_input(
-    active_entry.value,
+    Util.rstrip('/', vim.fn.fnamemodify(active_entry.value, ':p')),
     History.find_entry('recent', active_entry.value, 'name')
   )
-  Log.debug(('(%s.rename_project): Refreshing prompt `%s`.'):format(MODSTR, prompt_bufnr))
-
-  State.get_current_picker(prompt_bufnr):refresh(
-    (function()
-      local results = History.get_recent_projects(true, Config.options.telescope.tilde)
-      if Config.options.telescope.sort == 'newest' then
-        Log.debug(('(%s.rename_project): Sorting order to `newest`.'):format(MODSTR))
-        results = Util.reverse(results)
-      end
-      return Finders.new_table({
-        results = results,
-        entry_maker = function(value) ---@param value string|ProjectHistoryEntry
-          local name ---@type string
-          if History.legacy then
-            ---@cast value string
-            name = ('%s/%s'):format(
-              vim.fn.fnamemodify(value, ':h:t'),
-              vim.fn.fnamemodify(value, ':t')
-            )
-          else
-            ---@cast value ProjectHistoryEntry
-            name = value.name
-          end
-          local action_entry = { ---@class Project.ActionEntry
-            display = make_display,
-            name = name,
-            value = History.legacy and value or value.path,
-            ordinal = ('%s %s'):format(name, History.legacy and value or value.path),
-          }
-          return action_entry
-        end,
-      })
-    end)(),
-    { reset_prompt = true }
-  )
+  Log.debug(('(%s.r ename_project): Refreshing prompt `%s`.'):format(MODSTR, prompt_bufnr))
 end
 
 ---@param prompt_bufnr integer
