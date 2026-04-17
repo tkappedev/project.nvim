@@ -70,8 +70,8 @@ function M.delete_project(prompt_bufnr)
           local action_entry = { ---@class Project.ActionEntry
             display = make_display,
             name = name,
-            value = value,
-            ordinal = ('%s %s'):format(name, value),
+            value = History.legacy and value or value.path,
+            ordinal = ('%s %s'):format(name, History.legacy and value or value.path),
           }
           return action_entry
         end,
@@ -172,7 +172,7 @@ function M.rename_project(prompt_bufnr)
 
   State.get_current_picker(prompt_bufnr):refresh(
     (function()
-      local results = History.get_recent_projects(true)
+      local results = History.get_recent_projects(true, Config.options.telescope.tilde)
       if Config.options.telescope.sort == 'newest' then
         Log.debug(('(%s.rename_project): Sorting order to `newest`.'):format(MODSTR))
         results = Util.reverse(results)
@@ -194,8 +194,8 @@ function M.rename_project(prompt_bufnr)
           local action_entry = { ---@class Project.ActionEntry
             display = make_display,
             name = name,
-            value = value,
-            ordinal = ('%s %s'):format(name, value),
+            value = History.legacy and value or value.path,
+            ordinal = ('%s %s'):format(name, History.legacy and value or value.path),
           }
           return action_entry
         end,
