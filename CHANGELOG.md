@@ -1,5 +1,14 @@
 # Changelog
 
+## [v3.1.0-1](https://github.com/DrKJeff16/project.nvim/tree/v3.1.0-1) (2026-04-17)
+
+[Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v3.0.1-1...v3.1.0-1)
+
+**Fixed bugs:**
+
+- \[BUG\] Race condition when multiple session open [\#58](https://github.com/DrKJeff16/project.nvim/issues/58)
+- fix\(history\): attempt to fix race condition bug \(closes \#58\) [\#59](https://github.com/DrKJeff16/project.nvim/pull/59) ([DrKJeff16](https://github.com/DrKJeff16))
+
 ## [v3.0.1-1](https://github.com/DrKJeff16/project.nvim/tree/v3.0.1-1) (2026-04-15)
 
 [Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v3.0.0-1...v3.0.1-1)
