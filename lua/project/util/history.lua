@@ -79,21 +79,35 @@ function M.migrate()
 end
 
 ---@param project string
----@param old_name string
 ---@param name string
 ---@return boolean success
-function M.rename_project(project, old_name, name)
+function M.rename_project(project, name)
   Util.validate({
     project = { project, { 'string' } },
-    old_name = { old_name, { 'string' } },
     name = { name, { 'string' } },
   })
   if M.legacy or vim.list_contains({ name, project }, '') then
     return false
   end
 
+  project = Util.rstrip('/', vim.fn.fnamemodify(project, ':p'))
+  name = Util.strip(' ', name)
+
+  local valid_chars = vim.split(
+    [[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@!_-?=+.,:;<>{}[]()'"^%$#&*`~| ]],
+    '',
+    { trimempty = false }
+  )
+  for _, c in ipairs(vim.split(name, '', { trimempty = false })) do
+    if not vim.list_contains(valid_chars, c) then
+      vim.notify(('(%s.rename_project): Invalid character `%s`!'):format(c), ERROR)
+      return false
+    end
+  end
+
   local renamed = false
   local recent_i = 0
+  local old_name = ''
   for i, proj in ipairs(M.recent_projects) do
     ---@cast proj ProjectHistoryEntry
     if proj.path == project then
@@ -102,6 +116,7 @@ function M.rename_project(project, old_name, name)
     end
   end
   if recent_i ~= 0 then
+    old_name = M.recent_projects[recent_i].name
     M.recent_projects[recent_i].name = name
     renamed = true
   end
@@ -115,6 +130,7 @@ function M.rename_project(project, old_name, name)
     end
   end
   if session_i ~= 0 then
+    old_name = M.session_projects[session_i].name
     M.session_projects[session_i].name = name
     renamed = true
   end

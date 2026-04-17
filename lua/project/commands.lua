@@ -352,7 +352,7 @@ function M.create_user_commands()
         local options = { 'clear' } ---@type string[]
         table.insert(options, History.legacy and 'migrate' or 'rename')
 
-        if not vim.list_contains(options, ctx.fargs[1]) or #ctx.fargs > 1 then
+        if not vim.list_contains(options, ctx.fargs[1]) then
           vim.notify('Usage:  `:ProjectHistory[!] [clear]`', WARN)
           return
         end

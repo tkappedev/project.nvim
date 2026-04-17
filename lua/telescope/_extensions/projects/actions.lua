@@ -162,8 +162,7 @@ function M.rename_project(prompt_bufnr)
   Actions.close(prompt_bufnr)
 
   require('project.popup').rename_input(
-    Util.rstrip('/', vim.fn.fnamemodify(active_entry.value, ':p')),
-    History.find_entry('recent', active_entry.value, 'name')
+    Util.rstrip('/', vim.fn.fnamemodify(active_entry.value, ':p'))
   )
   Log.debug(('(%s.r ename_project): Refreshing prompt `%s`.'):format(MODSTR, prompt_bufnr))
 end

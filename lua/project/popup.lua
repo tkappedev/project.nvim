@@ -127,34 +127,22 @@ local M = {}
 M.select = {}
 
 ---@param project string
----@param old_name? string
 ---@return boolean success
-function M.rename_input(project, old_name)
-  Util.validate({
-    project = { project, { 'string' } },
-    old_name = { old_name, { 'string', 'nil' }, true },
-  })
-  old_name = old_name or ''
-
-  if old_name == '' then
-    local entry = History.find_entry('recent', project, 'name')
-    if not entry then
-      return false
-    end
-
-    old_name = entry
-  end
+function M.rename_input(project)
+  Util.validate({ project = { project, { 'string' } } })
 
   local success = true
   vim.ui.input({
-    prompt = ('Input the new name for project %s'):format(old_name),
+    prompt = ('Input the new name for project %s'):format(
+      History.find_entry('recent', project, 'name')
+    ),
   }, function(input)
     if not input or input == '' then
       success = false
       return
     end
 
-    success = History.rename_project(project, old_name, input)
+    success = History.rename_project(project, input)
   end)
 
   return success
@@ -395,13 +383,14 @@ M.rename_menu = M.select.new({
     for _, proj in ipairs(M.rename_menu.choices_list()) do
       if proj == 'Exit' then
         T[proj] = function() end
-      elseif Config.options.show_by_name and not History.legacy then
-        T[proj] = function(name)
-          History.rename_project(History.find_entry('recent', proj, 'path'), proj, name)
-        end
       else
         T[proj] = function(name)
-          History.rename_project(proj, History.find_entry('recent', proj, 'name'), name)
+          History.rename_project(
+            (Config.options.show_by_name and not History.legacy)
+                and History.find_entry('recent', proj, 'path')
+              or proj,
+            name
+          )
         end
       end
     end

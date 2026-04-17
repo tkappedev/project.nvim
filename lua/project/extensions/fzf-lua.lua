@@ -1,8 +1,9 @@
 local MODSTR = 'project.extensions.fzf-lua'
 local ERROR = vim.log.levels.ERROR
-local Util = require('project.util')
 local Log = require('project.util.log')
 local Config = require('project.config')
+local History = require('project.util.history')
+local Util = require('project.util')
 
 ---@class Project.Extensions.FzfLua
 local M = {}
@@ -15,7 +16,7 @@ function M.default(items)
 
   Log.debug(('(%s.default): Running default fzf-lua action.'):format(MODSTR))
   require('fzf-lua').files({
-    cwd = items[1],
+    cwd = History.find_entry('recent', items[1], 'path'),
     cwd_only = true,
     silent = Config.options.silent_chdir,
     hidden = Config.options.show_hidden,
@@ -29,7 +30,7 @@ function M.delete_project(items)
   end
 
   for _, item in ipairs(items) do
-    require('project.util.history').delete_project(item, true)
+    History.delete_project(History.find_entry('recent', item, 'path'), true)
   end
 end
 
@@ -39,20 +40,24 @@ function M.rename_project(items)
     return
   end
 
-  local History = require('project.util.history')
   for _, item in ipairs(items) do
-    require('project.popup').rename_input(item, History.find_entry('recent', item, 'name'))
+    require('project.popup').rename_input(History.find_entry('recent', item, 'path'))
   end
 end
 
 ---@param cb fun(entry?: string|number, cb?: function)
 function M.exec(cb)
-  local projects = require('project.util.history').get_recent_projects() --[[@as ProjectHistoryEntry[]\]]
+  local projects = History.get_recent_projects()
   if Config.options.fzf_lua.sort == 'newest' then
     projects = Util.reverse(projects)
   end
+
   for _, entry in ipairs(projects) do
-    cb(Config.options.fzf_lua.show == 'names' and entry.name or entry.path)
+    if History.legacy then
+      cb(entry)
+    else
+      cb(Config.options.fzf_lua.show == 'names' and entry.name or entry.path)
+    end
   end
 
   cb()
@@ -93,12 +98,19 @@ function M.run_fzf_lua()
     actions = {
       default = { M.default },
       ['ctrl-d'] = {
-        M.delete_project,
+        function(items)
+          Fzf.hide()
+          M.delete_project(items)
+        end,
         Fzf.actions.resume,
       },
-      ['ctrl-r'] = {
-        M.rename_project,
-        Fzf.actions.resume,
+      ['ctrl-n'] = {
+        function(items)
+          Fzf.hide()
+
+          vim.api.nvim_feedkeys('i', 'n', false)
+          M.rename_project(items)
+        end,
       },
       ['ctrl-w'] = {
         function(items)

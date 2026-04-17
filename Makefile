@@ -1,14 +1,10 @@
 LUAROCKS_CMD = luarocks install --local
 CMD = nvim --clean --headless
-
 TAGS_CMD = $(CMD) -c 'helptags doc/' -c 'qa!'
 
 .PHONY: all check clean distclean helptags install-deps lint test
 
-all:
-	@echo -e "Usage: make [target]\n\nAvailable targets:"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@echo
+all: helptags
 
 check: ## Check using selene
 	@echo -e "Running selene...\n"
@@ -20,6 +16,11 @@ clean: ## Clean the generated helptags
 
 distclean: clean ## Remove all the unnecessary junk
 	@rm -rf deps .ropeproject .mypy_cache
+
+help: ## Prints this help message
+	@echo -e "Usage: make [target]\n\nAvailable targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo
 
 helptags: ## Generate Vim helptags
 	@echo -e "Generating helptags...\n"
@@ -36,7 +37,7 @@ lint: ## Lint using StyLua
 	@stylua .
 	@echo
 
-test: ## Run tests
+test: ## Run tests with busted
 	@echo -e "Running tests...\n"
 	@busted spec
 	@echo

@@ -76,6 +76,9 @@ function M.actions()
       require('project.util.history').delete_project(entry.value, true)
       require('picker.windows').open(M)
     end,
+    ['<C-r>'] = function(entry)
+      require('project.popup').rename_input(entry.value)
+    end,
     ['<C-w>'] = function(entry)
       if not Util.yes_no('Change cwd to `%s`?', vim.fn.fnamemodify(entry.value, ':~')) then
         return
