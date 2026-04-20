@@ -1,3 +1,5 @@
+local Util = require('project.util')
+
 ---Credits for this module goes to [David Manura](https://github.com/davidm/lua-glob-pattern).
 --- ---
 ---@class Project.Util.Glob
@@ -6,8 +8,14 @@ local M = {}
 ---Escape pattern char.
 --- ---
 ---@param char string
+---@param c string
 ---@return string escaped_char
 function M.escape(char, c)
+  Util.validate({
+    char = { char, { 'string' } },
+    c = { c, { 'string' } },
+  })
+
   return char:match('^%w$') and c or ('%' .. c)
 end
 
@@ -20,9 +28,17 @@ end
 ---@return string pattern
 ---@return integer i
 function M.unescape(glob, char, pattern, i)
+  Util.validate({
+    glob = { glob, { 'string' } },
+    char = { char, { 'string' } },
+    pattern = { pattern, { 'string' } },
+    i = { i, { 'number' } },
+  })
+
   if char ~= '\\' then
     return true, char, pattern, i
   end
+
   i = i + 1
   char = glob:sub(i, i)
   if char:len() == 0 then
@@ -42,6 +58,13 @@ end
 ---@return string pattern
 ---@return integer i
 function M.charset_end(glob, char, pattern, i)
+  Util.validate({
+    glob = { glob, { 'string' } },
+    char = { char, { 'string' } },
+    pattern = { pattern, { 'string' } },
+    i = { i, { 'number' } },
+  })
+
   local un = false
   while true do
     if char:len() == 0 then
@@ -97,6 +120,13 @@ end
 ---@return string pattern
 ---@return integer i
 function M.charset(glob, char, pattern, i)
+  Util.validate({
+    glob = { glob, { 'string' } },
+    char = { char, { 'string' } },
+    pattern = { pattern, { 'string' } },
+    i = { i, { 'number' } },
+  })
+
   local chs_end = false
   i = i + 1
   char = glob:sub(i, i)
@@ -129,6 +159,8 @@ end
 ---@param glob string
 ---@return string pattern
 function M.globtopattern(glob)
+  Util.validate({ glob = { glob, { 'string' } } })
+
   local pattern = '^'
   local i = 0
   local char = ''
@@ -164,18 +196,13 @@ end
 ---@param pattern string
 ---@return string pattern
 function M.pattern_exclude(pattern)
+  Util.validate({ pattern = { pattern, { 'string' } } })
+
   if vim.startswith(pattern, '~/') then
     pattern = ('%s/%s'):format(vim.fn.expand('~'), pattern:sub(3, pattern:len()))
   end
   return M.globtopattern(pattern)
 end
 
-local Glob = setmetatable(M, { ---@type Project.Util.Glob
-  __index = M,
-  __newindex = function()
-    vim.notify('User.Utils.Glob is Read-Only!', vim.log.levels.ERROR)
-  end,
-})
-
-return Glob
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

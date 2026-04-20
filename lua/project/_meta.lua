@@ -199,11 +199,13 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---@field enabled? boolean
 ---@field opts? ProjectSnacksConfig
 ---@field show? ProjectOpts.Show
+---@field tilde? boolean
 
 ---@class ProjectDefaults.Snacks: ProjectOpts.Snacks
 ---@field enabled boolean
 ---@field opts ProjectSnacksConfig
 ---@field show ProjectOpts.Show
+---@field tilde boolean
 
 ---Table of options used for the telescope picker.
 --- ---

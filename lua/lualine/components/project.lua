@@ -94,10 +94,16 @@ function M:project_root()
     return msg
   end
 
+  local Api = require('project.api')
   local History = require('project.util.history')
-  local format = self.options.format or 'short'
-  local curr = require('project.api').get_current_project(bufnr)
-  local root = require('project.api').get_project_root(bufnr)
+  local curr, root = Api.get_current_project(bufnr), Api.get_project_root(bufnr)
+  local format = (
+    self.options.format
+    and vim.list_contains({ 'short', 'full', 'full_expanded', 'name' }, self.options.format)
+  )
+      and self.options.format
+    or 'short'
+
   if
     not in_list({ 'short', 'full', 'full_expanded', 'name' }, format)
     or not (curr and root)
@@ -107,20 +113,17 @@ function M:project_root()
   elseif format == 'full_expanded' then
     msg = Util.rstrip('/', vim.fn.fnamemodify(curr, ':p'))
   elseif format == 'full' then
-    msg = vim.fn.fnamemodify(Util.rstrip('/', vim.fn.fnamemodify(curr, ':p')), ':~')
+    msg = Util.rstrip('/', vim.fn.fnamemodify(curr, ':p:~'))
   elseif format == 'name' and not History.legacy then
-    msg = History.find_entry('recent', curr, 'name')
+    msg = History.find_entry('both', curr, 'name')
   end
   if format == 'short' or not msg then
-    msg = vim.fn.fnamemodify(Util.rstrip('/', vim.fn.fnamemodify(curr, ':p')), ':p:h:t')
+    msg = Util.rstrip('/', vim.fn.fnamemodify(curr, ':p:h:t'))
   end
 
   if self.options.enclose_pair then
-    msg = (self.options.enclose_pair[1] and self.options.enclose_pair[1] or '')
-      .. msg
-      .. (self.options.enclose_pair[2] and self.options.enclose_pair[2] or '') --[[@as string]]
+    msg = (self.options.enclose_pair[1] or '') .. msg .. (self.options.enclose_pair[2] or '')
   end
-
   return msg
 end
 

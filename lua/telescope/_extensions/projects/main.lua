@@ -111,12 +111,5 @@ function M.projects(opts)
   }):find()
 end
 
-local Main = setmetatable(M, { ---@type Project.Telescope.Main
-  __index = M,
-  __newindex = function()
-    vim.notify('Project.Telescope.Main is Read-Only!', ERROR)
-  end,
-})
-
-return Main
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

@@ -12,6 +12,7 @@ if not require('project.util').mod_exists('telescope') then
   return
 end
 
+local History = require('project.util.history')
 local Util = require('project.util')
 local Finders = require('telescope.finders')
 local Entry_display = require('telescope.pickers.entry_display')
@@ -43,7 +44,7 @@ function M.create_finder()
   local sort = require('project.config').options.telescope.sort
   Log.info(('(%s.create_finder): Sorting by `%s`.'):format(MODSTR, sort))
 
-  local results = require('project.util.history').get_recent_projects()
+  local results = History.get_recent_projects()
   if sort == 'newest' then
     results = Util.reverse(results)
   end
@@ -52,7 +53,6 @@ function M.create_finder()
   return Finders.new_table({
     results = results,
     entry_maker = function(entry) ---@param entry string|ProjectHistoryEntry
-      local History = require('project.util.history')
       local name ---@type string
       if History.legacy then
         ---@cast entry string
@@ -71,12 +71,5 @@ function M.create_finder()
   })
 end
 
-local T_Util = setmetatable(M, { ---@type Project.Telescope.Util
-  __index = M,
-  __newindex = function()
-    vim.notify('Project.Telescope.Util is Read-Only!', ERROR)
-  end,
-})
-
-return T_Util
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

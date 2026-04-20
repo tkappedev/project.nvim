@@ -18,7 +18,7 @@ local Config = require('project.config')
 ---@field public window? Project.LogWin
 ---@field private timer uv.uv_timer_t|nil
 ---@field public has_watch_setup? boolean
-local Log = {}
+local M = {}
 
 ---@param lvl vim.log.levels
 ---@return fun(...: any): output: string|nil
@@ -41,26 +41,26 @@ local function gen_log(lvl)
         msg = ('%s %s'):format(msg, sel)
       end
     end
-    return Log.write(('%s\n'):format(msg), lvl)
+    return M.write(('%s\n'):format(msg), lvl)
   end
 end
 
-Log.debug = gen_log(DEBUG)
-Log.error = gen_log(ERROR)
-Log.info = gen_log(INFO)
-Log.trace = gen_log(TRACE)
-Log.warn = gen_log(WARN)
+M.debug = gen_log(DEBUG)
+M.error = gen_log(ERROR)
+M.info = gen_log(INFO)
+M.trace = gen_log(TRACE)
+M.warn = gen_log(WARN)
 
 ---@return string|nil data
-function Log.read_log()
-  if not Log.logfile then
+function M.read_log()
+  if not M.logfile then
     return
   end
-  local stat = uv.fs_stat(Log.logfile)
+  local stat = uv.fs_stat(M.logfile)
   if not stat then
     return
   end
-  local fd = Log.open('r')
+  local fd = M.open('r')
   if not fd then
     return
   end
@@ -69,8 +69,8 @@ function Log.read_log()
   return data
 end
 
-function Log.clear_log()
-  local success = uv.fs_unlink(Log.logfile)
+function M.clear_log()
+  local success = uv.fs_unlink(M.logfile)
   if success then
     vim.notify('(project.nvim): Log cleared successfully', INFO)
     vim.g.project_log_cleared = 1
@@ -79,34 +79,34 @@ end
 
 ---Only runs once.
 --- ---
-function Log.setup_watch()
-  if Log.has_watch_setup then
+function M.setup_watch()
+  if M.has_watch_setup then
     return
   end
   local event = uv.new_fs_event()
   if not event then
     return
   end
-  event:start(Log.logpath, {}, function(err, _, events)
+  event:start(M.logpath, {}, function(err, _, events)
     if err or not events.change then
       return
     end
 
-    Log.read_log()
+    M.read_log()
   end)
 
-  Log.has_watch_setup = true
+  M.has_watch_setup = true
 
-  Log.make_timer()
+  M.make_timer()
 end
 
-function Log.timer_cb()
-  local stat = uv.fs_stat(Log.logfile)
+function M.timer_cb()
+  local stat = uv.fs_stat(M.logfile)
   if not stat or stat.size < math.floor(Config.options.log.max_size * 1024 * 1024) then
     return
   end
 
-  local fd = uv.fs_open(Log.logfile, 'w', tonumber('644', 8))
+  local fd = uv.fs_open(M.logfile, 'w', tonumber('644', 8))
   if not fd then
     return
   end
@@ -114,31 +114,31 @@ function Log.timer_cb()
   uv.fs_ftruncate(fd, 0)
   uv.fs_close(fd)
 
-  vim.notify(('(%s): `%s` has been cleared!'):format(MODSTR, Log.logfile), vim.log.levels.INFO)
+  vim.notify(('(%s): `%s` has been cleared!'):format(MODSTR, M.logfile), vim.log.levels.INFO)
 end
 
-function Log.make_timer()
-  if Log.timer and Log.timer:is_active() then
+function M.make_timer()
+  if M.timer and M.timer:is_active() then
     return
   end
 
-  Log.timer = uv.new_timer()
-  if not Log.timer then
+  M.timer = uv.new_timer()
+  if not M.timer then
     return
   end
 
-  Log.timer:start(10000, 900000, vim.schedule_wrap(Log.timer_cb))
+  M.timer:start(10000, 900000, vim.schedule_wrap(M.timer_cb))
 
   local group = vim.api.nvim_create_augroup('project.nvim.log', { clear = false })
   vim.api.nvim_create_autocmd({ 'VimLeavePre' }, {
     group = group,
     callback = function()
-      if not (Log.timer and Log.timer:is_active()) then
+      if not (M.timer and M.timer:is_active()) then
         return
       end
 
-      Log.timer:stop()
-      Log.timer = nil
+      M.timer:stop()
+      M.timer = nil
     end,
   })
 end
@@ -146,7 +146,7 @@ end
 ---@param data string
 ---@param lvl vim.log.levels
 ---@return string|nil written_data
-function Log.write(data, lvl)
+function M.write(data, lvl)
   if not Config.options.log.enabled or vim.g.project_log_cleared == 1 then
     return
   end
@@ -156,7 +156,7 @@ function Log.write(data, lvl)
     lvl = { lvl, { 'number' } },
   })
 
-  local fd = Log.open('a')
+  local fd = M.open('a')
   if not fd then
     return
   end
@@ -177,13 +177,13 @@ function Log.write(data, lvl)
   return msg
 end
 
-function Log.create_commands()
+function M.create_commands()
   require('project.commands').new({
     {
       name = 'ProjectLog',
       callback = function(ctx)
         if vim.tbl_isempty(ctx.fargs) then
-          Log.toggle_win()
+          M.toggle_win()
           return
         end
 
@@ -194,19 +194,19 @@ function Log.create_commands()
         end
 
         if arg == 'clear' then
-          Log.clear_log()
+          M.clear_log()
           return
         end
         if arg == 'close' then
-          Log.close_win()
+          M.close_win()
           return
         end
         if arg == 'open' then
-          Log.open_win()
+          M.open_win()
           return
         end
 
-        Log.toggle_win()
+        M.toggle_win()
       end,
       desc = 'Either opens the `project.nvim` log or clears the log file if `clear` is passed',
       nargs = '?',
@@ -232,37 +232,37 @@ end
 ---@param mode uv.fs_open.flags
 ---@return integer|nil fd
 ---@return uv.fs_stat.result|nil stat
-function Log.open(mode)
-  require('project.util.path').create_path(Log.logpath)
-  local dir_stat = uv.fs_stat(Log.logpath)
+function M.open(mode)
+  require('project.util.path').create_path(M.logpath)
+  local dir_stat = uv.fs_stat(M.logpath)
   if not dir_stat or dir_stat.type ~= 'directory' then
     error(('(%s.open): Projectpath stat is not valid!'):format(MODSTR), ERROR)
   end
 
-  local stat = uv.fs_stat(Log.logfile)
-  local fd = uv.fs_open(Log.logfile, mode, tonumber('644', 8))
+  local stat = uv.fs_stat(M.logfile)
+  local fd = uv.fs_open(M.logfile, mode, tonumber('644', 8))
   return fd, stat
 end
 
-function Log.init()
+function M.init()
   local log_cfg = Config.options.log or {}
   if not log_cfg.enabled then
     return
   end
-  Log.logpath = log_cfg.logpath
-  Log.logfile = Log.logpath .. '/project.log'
-  require('project.util.path').create_path(Log.logpath)
+  M.logpath = log_cfg.logpath
+  M.logfile = M.logpath .. '/project.log'
+  require('project.util.path').create_path(M.logpath)
 
   local fd
-  local stat = uv.fs_stat(Log.logfile)
+  local stat = uv.fs_stat(M.logfile)
   if not stat then
-    fd = Log.open('w')
+    fd = M.open('w')
     uv.fs_close(fd)
     fd = nil
   end
-  stat = uv.fs_stat(Log.logfile) ---@type uv.fs_stat.result
+  stat = uv.fs_stat(M.logfile) ---@type uv.fs_stat.result
 
-  fd = Log.open('a')
+  fd = M.open('a')
   local head = ('='):rep(45)
   uv.fs_write(
     fd,
@@ -270,33 +270,33 @@ function Log.init()
       .. os.date(('%s    %s    %s\n'):format(head, '%x  (%H:%M:%S)', head))
   )
 
-  Log.setup_watch()
-  Log.create_commands()
+  M.setup_watch()
+  M.create_commands()
 end
 
-function Log.open_win()
+function M.open_win()
   local enabled = Config.options.log.enabled
-  if not (Log.logfile and enabled) then
+  if not (M.logfile and enabled) then
     return
   end
   if vim.g.project_log_cleared == 1 then
     vim.notify(('(%s.open_win): Log has been cleared. Try restarting.'):format(MODSTR), WARN)
     return
   end
-  if not require('project.util.path').exists(Log.logfile) then
+  if not require('project.util.path').exists(M.logfile) then
     error(('(%s.open_win): Bad logfile path!'):format(MODSTR), ERROR)
   end
 
-  if Log.window then -- Log window appears to be open
+  if M.window then -- Log window appears to be open
     return
   end
 
-  local stat = uv.fs_stat(Log.logfile)
+  local stat = uv.fs_stat(M.logfile)
   if not stat then
     return
   end
 
-  local fd = uv.fs_open(Log.logfile, 'r', tonumber('644', 8))
+  local fd = uv.fs_open(M.logfile, 'r', tonumber('644', 8))
   if not fd then
     return
   end
@@ -330,31 +330,31 @@ function Log.open_win()
     Util.optset('buftype', 'nowrite', 'buf', bufnr)
     Util.optset('modifiable', false, 'buf', bufnr)
 
-    vim.keymap.set('n', 'q', Log.close_win, { buffer = bufnr })
+    vim.keymap.set('n', 'q', M.close_win, { buffer = bufnr })
 
-    Log.window = { win = win, bufnr = bufnr, tab = vim.api.nvim_get_current_tabpage() }
+    M.window = { win = win, bufnr = bufnr, tab = vim.api.nvim_get_current_tabpage() }
   end)
 end
 
-function Log.close_win()
-  if not Log.window then
+function M.close_win()
+  if not M.window then
     return
   end
 
-  pcall(vim.api.nvim_buf_delete, Log.window.bufnr, { force = true })
-  pcall(vim.api.nvim_cmd, { cmd = 'tabclose', range = { Log.window.tab } }, { output = false })
+  pcall(vim.api.nvim_buf_delete, M.window.bufnr, { force = true })
+  pcall(vim.api.nvim_cmd, { cmd = 'tabclose', range = { M.window.tab } }, { output = false })
 
-  Log.window = nil
+  M.window = nil
 end
 
-function Log.toggle_win()
-  if not Log.window then
-    Log.open_win()
+function M.toggle_win()
+  if not M.window then
+    M.open_win()
     return
   end
 
-  Log.close_win()
+  M.close_win()
 end
 
-return Log
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

@@ -69,42 +69,43 @@ function M.remove_root_patterns(patterns)
 
   Util.validate({ patterns = { patterns, { 'table', 'string' } } })
 
-  if Util.is_type('string', patterns) then
-    ---@cast patterns string
-    if patterns == '' then
-      vim.notify(
-        ('(%s.remove_root_patterns): Skipping empty pattern: `%s`'):format(MODSTR, patterns),
-        WARN
-      )
-    elseif not vim.list_contains(Config.options.patterns, patterns) then
-      vim.notify(
-        ('(%s.remove_root_patterns): Skipping unavailable pattern: `%s`'):format(MODSTR, patterns),
-        WARN
-      )
-    else
-      local pos = 1
-      for i, pat in ipairs(Config.options.patterns) do
-        if pat == patterns then
-          pos = i
-          break
-        end
+  if Util.is_type('table', patterns) then
+    ---@cast patterns string[]
+    if vim.tbl_isempty(patterns) then
+      vim.notify(('(%s.remove_root_patterns): Patterns table is empty!'):format(MODSTR), ERROR)
+      return
+    end
+    for _, pat in ipairs(patterns) do
+      if Util.is_type('string', pat) then
+        M.remove_root_patterns(pat)
       end
-      table.remove(Config.options.patterns, pos)
     end
+  end
+
+  ---@cast patterns string
+  if patterns == '' then
+    vim.notify(
+      ('(%s.remove_root_patterns): Skipping empty pattern: `%s`'):format(MODSTR, patterns),
+      WARN
+    )
+    return
+  end
+  if not vim.list_contains(Config.options.patterns, patterns) then
+    vim.notify(
+      ('(%s.remove_root_patterns): Skipping unavailable pattern: `%s`'):format(MODSTR, patterns),
+      WARN
+    )
     return
   end
 
-  ---@cast patterns string[]
-  if vim.tbl_isempty(patterns) then
-    vim.notify(('(%s.remove_root_patterns): Patterns table is empty!'):format(MODSTR), ERROR)
-    return
-  end
-
-  for _, pat in ipairs(patterns) do
-    if Util.is_type('string', pat) then
-      M.remove_root_patterns(pat)
+  local pos = 1
+  for i, pat in ipairs(Config.options.patterns) do
+    if pat == patterns then
+      pos = i
+      break
     end
   end
+  table.remove(Config.options.patterns, pos)
 end
 
 ---Add new root patterns to `project.nvim`'s config.

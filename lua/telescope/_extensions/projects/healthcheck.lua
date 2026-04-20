@@ -54,7 +54,7 @@ end
 
 ---This is called when running `:checkhealth telescope`.
 --- ---
-local function health_check()
+return function()
   if not setup_check() then
     return
   end
@@ -62,6 +62,4 @@ local function health_check()
   telescope_check()
   require('project.util.log').debug(('(%s): `checkhealth` successfully called.'):format(MODSTR))
 end
-
-return health_check
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

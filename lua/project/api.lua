@@ -21,7 +21,7 @@ local Log = require('project.util.log')
 ---@field public current_method string|nil
 ---@field public current_project string|nil
 ---@field public last_project string|nil
-local Api = {}
+local M = {}
 
 ---@class ProjectRootSwitch
 local SWITCH = {}
@@ -35,7 +35,7 @@ function SWITCH.lsp(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
-  local root, lsp_name = Api.find_lsp_root(bufnr or vim.api.nvim_get_current_buf())
+  local root, lsp_name = M.find_lsp_root(bufnr or vim.api.nvim_get_current_buf())
   if root then
     return true, root, ('"%s" lsp'):format(lsp_name)
   end
@@ -51,7 +51,7 @@ function SWITCH.pattern(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
-  local root, method = Api.find_pattern_root(bufnr or vim.api.nvim_get_current_buf())
+  local root, method = M.find_pattern_root(bufnr or vim.api.nvim_get_current_buf())
   if root then
     return true, root, method
   end
@@ -61,7 +61,7 @@ end
 ---@param bufnr integer
 ---@return boolean valid
 ---@nodiscard
-function Api.buffer_valid(bufnr)
+function M.buffer_valid(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number' } } })
 
   return vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr)
@@ -70,7 +70,7 @@ end
 ---@param bufnr? integer
 ---@return string|nil dir
 ---@nodiscard
-function Api.check_oil(bufnr)
+function M.check_oil(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
@@ -92,7 +92,7 @@ end
 ---@overload fun(entry: false): last: string|nil
 ---@overload fun(entry: true): last: ProjectHistoryEntry|nil
 ---@nodiscard
-function Api.get_last_project(entry)
+function M.get_last_project(entry)
   Util.validate({ entry = { entry, { 'boolean', 'nil' }, true } })
   if entry == nil then
     entry = false
@@ -116,7 +116,7 @@ end
 ---@overload fun(): history_paths: HistoryPath
 ---@overload fun(path: ProjectPaths): string
 ---@nodiscard
-function Api.get_history_paths(path)
+function M.get_history_paths(path)
   Util.validate({ path = { path, { 'string', 'nil' }, true } })
 
   local res = { ---@type HistoryPath
@@ -139,7 +139,7 @@ end
 ---@return string|nil dir
 ---@return string|nil name
 ---@nodiscard
-function Api.find_lsp_root(bufnr)
+function M.find_lsp_root(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
@@ -174,12 +174,12 @@ end
 ---@return string|nil dir_res
 ---@return string|nil method
 ---@nodiscard
-function Api.find_pattern_root(bufnr)
+function M.find_pattern_root(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
   local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local dir = Api.check_oil(bufnr) or '' ---@type string
+  local dir = M.check_oil(bufnr) or '' ---@type string
 
   dir = dir == '' and vim.fn.fnamemodify(bufname, ':p:h') or dir
   dir = Util.is_windows() and dir:gsub('\\', '/') or dir
@@ -189,11 +189,11 @@ end
 ---@param bufnr? integer
 ---@return boolean valid
 ---@nodiscard
-function Api.valid_bt(bufnr)
+function M.valid_bt(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
-  if not Api.buffer_valid(bufnr) then
+  if not M.buffer_valid(bufnr) then
     return false
   end
 
@@ -206,7 +206,7 @@ end
 ---**_An `augroup` ID is mandatory!_**
 --- ---
 ---@param group integer
-function Api.gen_lsp_autocmd(group)
+function M.gen_lsp_autocmd(group)
   Util.validate({ group = { group, { 'number' } } })
   if not Util.is_int(group) then
     error(('Parameter group is not an integer `%s`'):format(group))
@@ -220,7 +220,7 @@ function Api.gen_lsp_autocmd(group)
     group = group,
     nested = true,
     callback = function(ev)
-      Api.on_buf_enter(ev.buf)
+      M.on_buf_enter(ev.buf)
     end,
   })
   vim.g.project_lspattach = 1
@@ -229,7 +229,7 @@ end
 ---@param dir string
 ---@param method string
 ---@return boolean success
-function Api.set_pwd(dir, method)
+function M.set_pwd(dir, method)
   Util.validate({
     dir = { dir, { 'string' } },
     method = { method, { 'string' } },
@@ -258,7 +258,7 @@ function Api.set_pwd(dir, method)
   then
     table.insert(History.session_projects, History.legacy and dir or {
       path = dir,
-      name = History.find_entry('recent', dir, 'name')
+      name = History.find_entry('both', dir, 'name')
         or vim.fn.fnamemodify(dir, ':p:h:h:t') .. '/' .. vim.fn.fnamemodify(dir, ':p:h:t'),
     })
     modified = true
@@ -297,8 +297,8 @@ function Api.set_pwd(dir, method)
 
   local cwd = uv.cwd() or vim.fn.getcwd()
   if dir == Util.rstrip('/', cwd) then
-    Api.current_project = dir
-    Api.current_method = method
+    M.current_project = dir
+    M.current_method = method
     if vim.g.project_cwd_log ~= 1 then
       Log.info(('(%s.set_pwd): Current directory is selected project.'):format(MODSTR))
     end
@@ -332,8 +332,8 @@ function Api.set_pwd(dir, method)
   msg = ('%s\nMethod: %s\nStatus: %s'):format(msg, method, (ok and 'SUCCESS' or 'FAILED'))
 
   if ok then
-    Api.current_project = dir
-    Api.current_method = method
+    M.current_project = dir
+    M.current_method = method
 
     Log.info(msg)
     local on_attach = function() end
@@ -368,10 +368,10 @@ end
 ---@return string|nil root
 ---@return string|nil method
 ---@nodiscard
-function Api.get_project_root(bufnr)
+function M.get_project_root(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
-  if not Api.buffer_valid(bufnr) or vim.tbl_isempty(Config.detection_methods) then
+  if not M.buffer_valid(bufnr) or vim.tbl_isempty(Config.detection_methods) then
     return
   end
 
@@ -414,44 +414,44 @@ end
 ---@return string|nil method
 ---@return string|nil last
 ---@nodiscard
-function Api.get_current_project(bufnr)
+function M.get_current_project(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
-  if not Api.buffer_valid(bufnr) then
+  if not M.buffer_valid(bufnr) then
     return
   end
 
-  local curr, method = Api.get_project_root(bufnr)
-  local last = Api.get_last_project()
+  local curr, method = M.get_project_root(bufnr)
+  local last = M.get_last_project()
   return curr, method, last
 end
 
 ---@param bufnr? integer
 ---@return string|nil name
 ---@nodiscard
-function Api.get_current_project_name(bufnr)
+function M.get_current_project_name(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
-  if not Api.buffer_valid(bufnr) then
+  if not M.buffer_valid(bufnr) then
     return
   end
 
-  local curr = Api.get_project_root(bufnr)
-  return History.find_entry('recent', curr, 'name')
+  local curr = M.get_project_root(bufnr)
+  return History.find_entry('both', curr, 'name')
 end
 
 ---@param bufnr? integer
-function Api.on_buf_enter(bufnr)
+function M.on_buf_enter(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
-  if not (Api.buffer_valid(bufnr) and Api.valid_bt(bufnr)) then
+  if not (M.buffer_valid(bufnr) and M.valid_bt(bufnr)) then
     return
   end
 
   local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local dir = Api.check_oil(bufnr) or ''
+  local dir = M.check_oil(bufnr) or ''
 
   dir = Util.rstrip(
     '/',
@@ -467,17 +467,17 @@ function Api.on_buf_enter(bufnr)
     return
   end
 
-  Api.current_project, Api.current_method = Api.get_current_project(bufnr)
-  local change = Api.current_project ~= (uv.cwd() or vim.fn.getcwd())
-  Api.set_pwd(Api.current_project, Api.current_method)
+  M.current_project, M.current_method = M.get_current_project(bufnr)
+  local change = M.current_project ~= (uv.cwd() or vim.fn.getcwd())
+  M.set_pwd(M.current_project, M.current_method)
 
   if change then
-    Api.last_project = Api.get_last_project()
+    M.last_project = M.get_last_project()
   end
   History.write_history()
 end
 
-function Api.init()
+function M.init()
   local group = vim.api.nvim_create_augroup('project.nvim', { clear = true })
   vim.api.nvim_create_autocmd('VimLeavePre', {
     group = group,
@@ -491,16 +491,16 @@ function Api.init()
         group = group,
         nested = true,
         callback = function(ev)
-          Api.on_buf_enter(ev.buf)
+          M.on_buf_enter(ev.buf)
         end,
       })
     end
     if vim.list_contains(Config.detection_methods, 'lsp') then
-      Api.gen_lsp_autocmd(group)
+      M.gen_lsp_autocmd(group)
     end
   end
   History.read_history()
 end
 
-return Api
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

@@ -11,7 +11,6 @@ local DEFAULTS = { ---@type ProjectDefaults
   picker = { enabled = false, sort = 'newest', hidden = false, show = 'paths' },
   snacks = {
     enabled = false,
-    show = 'paths',
     opts = {
       sort = 'newest',
       hidden = false,
@@ -20,6 +19,8 @@ local DEFAULTS = { ---@type ProjectDefaults
       -- icon = {},
       -- path_icons = {},
     },
+    show = 'paths',
+    tilde = false,
   },
   lsp = { enabled = true, ignore = {}, no_fallback = false, use_pattern_matching = false },
   patterns = {

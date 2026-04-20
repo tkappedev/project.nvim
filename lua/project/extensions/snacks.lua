@@ -22,8 +22,9 @@ M.config = {
 ---@return snacks.picker.finder.Item[] items
 function M.gen_items()
   local History = require('project.util.history')
-  local items = {} ---@type snacks.picker.finder.Item[]
+  local Config = require('project.config')
   local recents = require('project').get_recent_projects(nil, true)
+  local items = {} ---@type snacks.picker.finder.Item[]
   if M.config.sort and M.config.sort == 'newest' then
     recents = Util.reverse(recents)
   end
@@ -32,20 +33,22 @@ function M.gen_items()
     local text = '' ---@type string
     if History.legacy then
       ---@cast proj string
-      text = vim.fn.fnamemodify(proj, ':~')
+      text = Config.options.snacks.tilde and vim.fn.fnamemodify(proj, ':p:~')
+        or Util.rstrip('/', vim.fn.fnamemodify(proj, ':p'))
     elseif M.config.show == 'paths' then
       ---@cast proj ProjectHistoryEntry
-      text = vim.fn.fnamemodify(proj.path, ':~')
+      text = Config.options.snacks.tilde and vim.fn.fnamemodify(proj.path, ':p:~')
+        or Util.rstrip('/', vim.fn.fnamemodify(proj.path, ':p'))
     else
       ---@cast proj ProjectHistoryEntry
-      text = History.find_entry('recent', proj.name, 'name')
+      text = proj.name
     end
 
     table.insert(items, {
       idx = i,
       score = i,
       text = text,
-      value = vim.fn.fnamemodify(History.legacy and proj or proj.path, ':~'),
+      value = Util.rstrip('/', vim.fn.fnamemodify(History.legacy and proj or proj.path, ':p:~')),
     })
   end
   return items
@@ -77,21 +80,22 @@ function M.pick()
   return require('snacks').picker.pick({
     actions = {
       chdir_only = function(self, item)
-        Api.set_pwd(item.value, 'snacks')
         self:close()
+        Api.set_pwd(item.value, 'snacks')
       end,
       delete_project = function(self, item)
-        History.delete_project(vim.fn.expand(item.value), true)
         self:close()
+        History.delete_project(vim.fn.expand(item.value), true)
         M.pick()
       end,
-      rename = function(self, item)
+      rename_project = function(self, item)
+        self:close()
+        vim.api.nvim_feedkeys('i', 'n', false)
+
         Popup.rename_input(
           vim.fn.expand(item.value),
-          History.find_entry('recent', item.value, 'name')
+          History.find_entry('both', item.value, 'name')
         )
-        self:close()
-        M.pick()
       end,
     },
     confirm = function(self, item)
@@ -99,14 +103,14 @@ function M.pick()
       if require('project.api').set_pwd(vim.fn.expand(item.value), 'snacks') then
         Log.debug(('(%s.pick): Opening Snacks picker'):format(MODSTR))
         require('snacks').picker.files({
-          cwd = uv.cwd(),
+          cwd = uv.cwd() or vim.fn.getcwd(),
           show_empty = true,
           hidden = M.config.hidden,
           finder = 'files',
           format = 'file',
           supports_live = true,
           auto_close = true,
-          dirs = { uv.cwd() },
+          dirs = { uv.cwd() or vim.fn.getcwd() },
           enter = true,
         })
       end

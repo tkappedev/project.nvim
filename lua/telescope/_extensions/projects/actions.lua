@@ -176,12 +176,5 @@ function M.recent_project_files(prompt_bufnr)
   Builtin.oldfiles({ cwd_only = true, hidden = Config.options.show_hidden })
 end
 
-local T_Actions = setmetatable(M, { ---@type Project.Telescope.Actions
-  __index = M,
-  __newindex = function()
-    vim.notify('Project.Telescope.Actions is Read-Only!', ERROR)
-  end,
-})
-
-return T_Actions
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

@@ -784,7 +784,7 @@ If you encounter any bugs please raise an issue and it will be dealt with ASAP.]
   return is_legacy
 end
 
----@param search 'session'|'recent'
+---@param search 'session'|'recent'|'both'
 ---@param value string
 ---@param key 'path'|'name'
 ---@return string|nil entry_field
@@ -796,7 +796,7 @@ function M.find_entry(search, value, key)
   })
   if
     not (
-      vim.list_contains({ 'recent', 'session' }, search)
+      vim.list_contains({ 'recent', 'session', 'both' }, search)
       and (vim.list_contains({ 'path', 'name' }, key) and not M.legacy)
     )
   then
@@ -808,8 +808,36 @@ function M.find_entry(search, value, key)
     return
   end
 
+  if search == 'both' then
+    local result1, result2 = nil, nil ---@type string|nil, string|nil
+    for _, v in ipairs(M.session_projects) do
+      ---@cast v ProjectHistoryEntry
+      if v.path == Util.rstrip('/', vim.fn.fnamemodify(value, ':p')) or v.name == value then
+        result1 = v[key]
+      end
+    end
+
+    if not M.recent_projects then
+      return result1
+    end
+
+    for _, v in ipairs(M.recent_projects) do
+      ---@cast v ProjectHistoryEntry
+      if v.path == Util.rstrip('/', vim.fn.fnamemodify(value, ':p')) or v.name == value then
+        result2 = v[key]
+      end
+    end
+
+    if not result2 or result2 ~= result1 then
+      return result1
+    end
+
+    return result2
+  end
+
   local tbl = search == 'session' and M.session_projects or M.recent_projects --[[@as ProjectHistoryEntry[]\]]
   for _, v in ipairs(tbl) do
+    ---@cast v ProjectHistoryEntry
     if v.path == Util.rstrip('/', vim.fn.fnamemodify(value, ':p')) or v.name == value then
       return v[key]
     end
