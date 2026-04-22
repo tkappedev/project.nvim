@@ -349,11 +349,13 @@ function M.create_user_commands()
           return
         end
 
-        local options = { 'clear' } ---@type string[]
-        table.insert(options, History.legacy and 'migrate' or 'rename')
+        local options = { 'clear', 'migrate' } ---@type string[]
+        if not History.legacy then
+          table.insert(options, 'rename')
+        end
 
         if not vim.list_contains(options, ctx.fargs[1]) then
-          vim.notify('Usage:  `:ProjectHistory[!] [clear]`', WARN)
+          vim.notify('Usage:  `:ProjectHistory[!] [clear|migrate|rename]`', WARN)
           return
         end
 
@@ -363,6 +365,11 @@ function M.create_user_commands()
         end
 
         if ctx.fargs[1] == 'migrate' then
+          if not History.legacy then
+            vim.notify('Your project history has already been migrated!', WARN)
+            return
+          end
+
           History.migrate()
           return
         end
