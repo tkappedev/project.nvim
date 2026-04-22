@@ -246,6 +246,11 @@ function M.root_included(dir)
   end
 end
 
+---@param ... string
+function M.join(...)
+  return vim.fs.joinpath(...)
+end
+
 ---@param save_dir string
 ---@param save_file string
 function M.init(save_dir, save_file)
@@ -263,12 +268,12 @@ function M.init(save_dir, save_file)
     end
   end
 
-  M.projectpath = vim.fs.joinpath(M.datapath, 'project_nvim')
+  M.projectpath = M.join(M.datapath, 'project_nvim')
   if not (M.exists(M.projectpath) or vim.fn.mkdir(M.projectpath, 'p') == 1) then
     error('(%s.init): Unable to create history subdirectory!', ERROR)
   end
 
-  M.historyfile = vim.fs.joinpath(M.projectpath, save_file)
+  M.historyfile = M.join(M.projectpath, save_file)
   if not M.exists(M.historyfile) then
     local fd = uv.fs_open(M.historyfile, 'w', tonumber('644', 8))
     if not fd then

@@ -115,9 +115,7 @@ function DEFAULTS:verify_history()
     ['history.save_file'] = { self.history.save_file, { 'string', 'nil' }, true },
     ['history.size'] = { self.history.size, { 'number', 'nil' }, true },
   })
-  self.history.save_dir =
-    Util.rstrip('/', vim.fn.fnamemodify(self.history.save_dir or DEFAULTS.history.save_dir, ':p'))
-
+  self.history.save_dir = Util.strip_slash(self.history.save_dir or DEFAULTS.history.save_dir)
   self.history.save_file = self.history.save_file or DEFAULTS.history.save_file
   self.history.size = self.history.size or DEFAULTS.history.size
   if not Util.is_int(self.history.size, self.history.size >= 0) then
@@ -232,7 +230,7 @@ function DEFAULTS:expand_excluded()
   end
 
   for i, v in ipairs(self.exclude_dirs) do
-    self.exclude_dirs[i] = Util.rstrip('\\', Util.rstrip('/', vim.fn.fnamemodify(v, ':p')))
+    self.exclude_dirs[i] = Util.rstrip('\\', Util.strip_slash(v))
   end
 end
 

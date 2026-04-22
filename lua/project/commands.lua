@@ -169,7 +169,7 @@ function M.create_user_commands()
         local session = History.session_projects
         local msg = ''
         for _, input in ipairs(ctx.fargs) do
-          input = Util.rstrip('/', (vim.fn.fnamemodify(input, ':p')))
+          input = Util.strip_slash(input)
           if Util.dir_exists(input) then
             if
               Api.current_project ~= input

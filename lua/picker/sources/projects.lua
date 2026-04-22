@@ -35,10 +35,7 @@ local function gen_items(source)
       ---@cast v ProjectHistoryEntry
       path = ('%s %s'):format(path, v.name)
     else
-      path = ('%s %s'):format(
-        path,
-        Util.rstrip('/', vim.fn.fnamemodify(History.legacy and v or v.path, ':~'))
-      )
+      path = ('%s %s'):format(path, Util.strip_slash(History.legacy and v or v.path, ':p:~'))
     end
     local hl = { { 0, n_digits + 1, 'Number' } } ---@type ProjectPickerItem.Hl[]
     if is_curr then
@@ -49,7 +46,7 @@ local function gen_items(source)
     end
 
     table.insert(items, {
-      value = Util.rstrip('/', vim.fn.fnamemodify(History.legacy and v or v.path, ':p')),
+      value = Util.strip_slash(History.legacy and v or v.path),
       str = path,
       highlight = hl,
     })

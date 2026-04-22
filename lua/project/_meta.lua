@@ -515,9 +515,7 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---@field disable_on ProjectDefaults.DisableOn
 ---@field enable_autochdir boolean
 ---@field exclude_dirs string[]
----@field expand_excluded fun(self: ProjectDefaults)
 ---@field fzf_lua ProjectDefaults.FzfLua
----@field gen_methods fun(self: ProjectDefaults): methods: { [1]: 'pattern' }|{ [1]: 'lsp', [2]: 'pattern' }
 ---@field history ProjectDefaults.History
 ---@field log ProjectDefaults.Logging
 ---@field lsp ProjectDefaults.LSP
@@ -532,20 +530,26 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---@field silent_chdir boolean
 ---@field snacks ProjectDefaults.Snacks
 ---@field telescope ProjectDefaults.Telescope
----@field verify fun(self: ProjectDefaults)
----@field verify_datapath fun(self: ProjectDefaults)
----@field verify_fzf_lua fun(self: ProjectDefaults)
----@field verify_history fun(self: ProjectDefaults)
----@field verify_lists fun(self: ProjectDefaults)
----@field verify_logging fun(self: ProjectDefaults)
----@field verify_lsp fun(self: ProjectDefaults)
----@field verify_owners fun(self: ProjectDefaults)
----@field verify_scope_chdir fun(self: ProjectDefaults)
 local D = {}
+
+function D:expand_excluded() end
+
+---@return { [1]: 'pattern' }|{ [1]: 'lsp', [2]: 'pattern' } methods
+function D:gen_methods() end
 
 ---@param opts? ProjectOpts
 ---@return ProjectDefaults defaults
 function D:new(opts) end
+
+function D:verify() end
+function D:verify_datapath() end
+function D:verify_fzf_lua() end
+function D:verify_history() end
+function D:verify_lists() end
+function D:verify_logging() end
+function D:verify_lsp() end
+function D:verify_owners() end
+function D:verify_scope_chdir() end
 
 ---@class Project.ConfigLoc
 ---@field bufnr integer
@@ -557,11 +561,20 @@ function D:new(opts) end
 ---@field type string
 
 ---@class Project.Popup.SelectChoices
----@field choices fun(): choices_dict: table<string, fun(...?: any)>
----@field choices_list fun(exit?: boolean): choices: string[]
+local C = {}
+
+---@return table<string, fun(...?: any)> choices_dict
+function C.choices() end
+
+---@param exit? boolean
+---@return string[] choices
+function C.choices_list(exit) end
 
 ---@class Project.Popup.SelectSpec: Project.Popup.SelectChoices
----@field callback fun(ctx?: vim.api.keyset.create_user_command.command_args)
+local S = {}
+
+---@param ctx? vim.api.keyset.create_user_command.command_args
+function S.callback(ctx) end
 
 ---Non-legacy validation spec (>=v0.11).
 --- ---

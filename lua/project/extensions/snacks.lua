@@ -33,12 +33,10 @@ function M.gen_items()
     local text = '' ---@type string
     if History.legacy then
       ---@cast proj string
-      text = Config.options.snacks.tilde and vim.fn.fnamemodify(proj, ':p:~')
-        or Util.rstrip('/', vim.fn.fnamemodify(proj, ':p'))
+      text = Util.strip_slash(proj, Config.options.snacks.tilde and ':p:~' or nil)
     elseif M.config.show == 'paths' then
       ---@cast proj ProjectHistoryEntry
-      text = Config.options.snacks.tilde and vim.fn.fnamemodify(proj.path, ':p:~')
-        or Util.rstrip('/', vim.fn.fnamemodify(proj.path, ':p'))
+      text = Util.strip_slash(proj.path, Config.options.snacks.tilde and ':p:~' or nil)
     else
       ---@cast proj ProjectHistoryEntry
       text = proj.name
@@ -48,7 +46,7 @@ function M.gen_items()
       idx = i,
       score = i,
       text = text,
-      value = Util.rstrip('/', vim.fn.fnamemodify(History.legacy and proj or proj.path, ':p:~')),
+      value = Util.strip_slash(History.legacy and proj or proj.path, ':p:~'),
     })
   end
   return items

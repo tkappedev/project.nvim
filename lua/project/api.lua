@@ -83,7 +83,7 @@ function M.check_oil(bufnr)
     or bufname:gsub('^oil://', '')
 
   if dir then
-    dir = Util.rstrip('/', dir)
+    dir = Util.strip_slash(dir)
   end
   return dir
 end
@@ -247,7 +247,7 @@ function M.set_pwd(dir, method)
   end
 
   local modified = false
-  local unexpand_dir = Util.rstrip('/', vim.fn.fnamemodify(dir, ':p:~'))
+  local unexpand_dir = Util.strip_slash(dir, ':p:~')
   if not History.session_projects then
     History.session_projects = {}
   end
@@ -296,7 +296,7 @@ function M.set_pwd(dir, method)
   end
 
   local cwd = uv.cwd() or vim.fn.getcwd()
-  if dir == Util.rstrip('/', cwd) then
+  if dir == Util.strip_slash('/', cwd) then
     M.current_project = dir
     M.current_method = method
     if vim.g.project_cwd_log ~= 1 then
@@ -453,10 +453,7 @@ function M.on_buf_enter(bufnr)
   local bufname = vim.api.nvim_buf_get_name(bufnr)
   local dir = M.check_oil(bufnr) or ''
 
-  dir = Util.rstrip(
-    '/',
-    dir == '' and vim.fn.fnamemodify(bufname, ':p:h') or vim.fn.fnamemodify(dir, ':p')
-  )
+  dir = dir == '' and Util.strip_slash(bufname, ':p:h') or Util.strip_slash(dir)
   dir = Util.is_windows() and dir:gsub('\\', '/') or dir
   if not (Path.exists(dir) and Path.root_included(dir)) or Path.is_excluded(dir) then
     return

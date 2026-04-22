@@ -111,14 +111,14 @@ function M:project_root()
   then
     msg = self.options.no_project --[[@as string]]
   elseif format == 'full_expanded' then
-    msg = Util.rstrip('/', vim.fn.fnamemodify(curr, ':p'))
+    msg = Util.strip_slash(curr)
   elseif format == 'full' then
-    msg = Util.rstrip('/', vim.fn.fnamemodify(curr, ':p:~'))
+    msg = Util.strip_slash(curr, ':p:~')
   elseif format == 'name' and not History.legacy then
     msg = History.find_entry('both', curr, 'name')
   end
   if format == 'short' or not msg then
-    msg = Util.rstrip('/', vim.fn.fnamemodify(curr, ':p:h:t'))
+    msg = Util.strip_slash(curr, ':p:h:t')
   end
 
   if self.options.enclose_pair then

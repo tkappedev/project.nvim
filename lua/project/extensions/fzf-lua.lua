@@ -126,12 +126,5 @@ function M.run_fzf_lua()
   })
 end
 
-local FzfLua = setmetatable(M, { ---@type Project.Extensions.FzfLua
-  __index = M,
-  __newindex = function()
-    vim.notify('Project.Extensions.FzfLua is Read-Only!', ERROR)
-  end,
-})
-
-return FzfLua
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

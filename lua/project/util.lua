@@ -6,6 +6,19 @@ local ERROR = vim.log.levels.ERROR
 ---@class Project.Util
 local M = {}
 
+---@param path string
+---@param mods? string
+---@return string str
+function M.strip_slash(path, mods)
+  M.validate({
+    path = { path, { 'string' } },
+    mods = { mods, { 'string', 'nil' }, true },
+  })
+  mods = (mods and mods ~= '') and mods or ':p' --[[@as string]]
+
+  return M.rstrip('/', vim.fn.fnamemodify(path, mods))
+end
+
 ---@param s string
 ---@param chars string
 ---@param extra_allowed? { spaces?: boolean, newlines?: boolean }
@@ -811,12 +824,5 @@ function M.normalise_path(path)
   return normalised_path
 end
 
-local Util = setmetatable(M, { ---@type Project.Util
-  __index = M,
-  __newindex = function()
-    vim.notify('Project.Util is Read-Only!', vim.log.levels.ERROR)
-  end,
-})
-
-return Util
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

@@ -7,6 +7,7 @@ local uv = vim.uv or vim.loop
 local Config = require('project.config')
 local History = require('project.util.history')
 local Util = require('project.util')
+local Path = require('project.util.path')
 
 ---@param path string
 ---@param hidden boolean
@@ -78,7 +79,7 @@ local function open_node(proj, only_cd, ran_cd)
     if not node then
       break
     end
-    node = vim.fs.joinpath(proj, node)
+    node = Path.join(proj, node)
     if uv.fs_stat(node) then
       local hid = Util.is_hidden(node)
       if (hidden and hid) or hidden_avail(node, hidden) then
@@ -95,7 +96,7 @@ local function open_node(proj, only_cd, ran_cd)
         return item
       end
 
-      item = Util.rstrip('/', vim.fn.fnamemodify(item, ':~'))
+      item = Util.strip_slash(item, ':~')
       return vim.fn.fnamemodify(item, ':~') .. (vim.fn.isdirectory(item) == 1 and '/' or '')
     end,
   }, function(item) ---@param item string
@@ -103,17 +104,16 @@ local function open_node(proj, only_cd, ran_cd)
       return
     end
 
-    item = Util.rstrip('\\', Util.rstrip('/', vim.fn.fnamemodify(item, ':p')))
+    item = Util.rstrip('\\', Util.strip_slash(item))
     local stat = uv.fs_stat(item)
     if not stat then
       return
     end
+
     if stat.type == 'file' then
       vim.g.project_nvim_cwd = ''
       vim.cmd.edit(item)
-      return
-    end
-    if stat.type == 'directory' then
+    elseif stat.type == 'directory' then
       vim.g.project_nvim_cwd = item
       open_node(item, false, ran_cd)
     end
@@ -233,15 +233,14 @@ function M.prompt_project(input)
     return
   end
 
-  local Path = require('project.util.path')
   local original_input = input
-  input = Util.rstrip('/', vim.fn.fnamemodify(input, ':p'))
+  input = Util.strip_slash(input)
   if not (Path.exists(input) and Path.exists(vim.fn.fnamemodify(input, ':p:h'))) then
     vim.notify(('Invalid path `%s`'):format(original_input), ERROR)
     return
   end
   if not Util.dir_exists(input) then
-    input = Util.rstrip('/', vim.fn.fnamemodify(input, ':p:h'))
+    input = Util.strip_slash(input, ':p:h')
     if not Util.dir_exists(input) then
       vim.notify('Path is not a directory, and parent could not be retrieved!', ERROR)
       return
