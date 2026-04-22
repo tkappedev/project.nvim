@@ -1,5 +1,13 @@
 # Changelog
 
+## [v3.2.0-1](https://github.com/DrKJeff16/project.nvim/tree/v3.2.0-1) (2026-04-22)
+
+[Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v3.1.0-1...v3.2.0-1)
+
+**Fixed bugs:**
+
+- fix: initialize new historyfile with empty array [\#61](https://github.com/DrKJeff16/project.nvim/pull/61) ([tkappedev](https://github.com/tkappedev))
+
 ## [v3.1.0-1](https://github.com/DrKJeff16/project.nvim/tree/v3.1.0-1) (2026-04-17)
 
 [Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v3.0.1-1...v3.1.0-1)
