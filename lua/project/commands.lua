@@ -8,6 +8,7 @@ local Util = require('project.util')
 local Popup = require('project.popup')
 local History = require('project.util.history')
 local Api = require('project.api')
+local Path = require('project.util.path')
 local Log = require('project.util.log')
 local Config = require('project.config')
 
@@ -375,12 +376,30 @@ function M.create_user_commands()
         end
 
         if #ctx.fargs == 1 then
+          if
+            not vim.list_contains(
+              { Util.strip_slash(ctx.fargs[1]), Util.strip_slash(ctx.fargs[1], ':p:~') },
+              ctx.fargs[1]
+            )
+          then
+            vim.notify('(:ProjectHistory rename): Invalid directory!', ERROR)
+            return
+          end
+
           Popup.rename_menu()
           return
         end
 
         for i = 2, #ctx.fargs, 1 do
-          if not Popup.rename_input(ctx.fargs[i]) then
+          if
+            not vim.list_contains(
+              { Util.strip_slash(ctx.fargs[i]), Util.strip_slash(ctx.fargs[i], ':p:~') },
+              ctx.fargs[i]
+            )
+          then
+            vim.notify('(:ProjectHistory rename): Invalid directory!', ERROR)
+            return
+          elseif not Popup.rename_input(ctx.fargs[i]) then
             vim.notify(
               ('(ProjectHistory): Unable to rename project `%s`!'):format(ctx.fargs[i]),
               ERROR
