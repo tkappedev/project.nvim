@@ -160,7 +160,7 @@ function M.create_user_commands()
           local opts = { prompt = 'Input a valid path to the project:', completion = 'dir' }
           if ctx.bang then
             local bufnr = vim.api.nvim_get_current_buf()
-            opts.default = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ':p:h')
+            opts.default = Util.strip_slash(vim.api.nvim_buf_get_name(bufnr), ':p:h')
           end
 
           vim.ui.input(opts, Popup.prompt_project)
@@ -226,10 +226,7 @@ function M.create_user_commands()
         local msg
         for _, v in ipairs(ctx.fargs) do
           v = Util.strip({ '"', "'" }, v)
-          local path = vim.fn.fnamemodify(v, ':p')
-          if path:sub(-1) == '/' then
-            path = path:sub(1, path:len() - 1)
-          end
+          local path = Util.strip_slash(v)
           if
             not (
               ctx.bang

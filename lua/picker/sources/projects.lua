@@ -77,7 +77,7 @@ function M.actions()
       require('project.popup').rename_input(entry.value)
     end,
     ['<C-w>'] = function(entry)
-      if not Util.yes_no('Change cwd to `%s`?', vim.fn.fnamemodify(entry.value, ':~')) then
+      if not Util.yes_no('Change cwd to `%s`?', Util.strip_slash(entry.value, ':p:~')) then
         return
       end
       require('project.api').set_pwd(entry.value, 'picker.nvim')

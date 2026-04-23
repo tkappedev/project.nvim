@@ -36,7 +36,7 @@ function M.migrate()
     for i, v in ipairs(M.recent_projects) do
       M.recent_projects[i] = {
         path = v,
-        name = ('%s/%s'):format(vim.fn.fnamemodify(v, ':p:h:h:t'), vim.fn.fnamemodify(v, ':p:h:t')),
+        name = ('%s/%s'):format(Util.strip_slash(v, ':p:h:h:t'), Util.strip_slash(v, ':p:h:t')),
       }
     end
 
@@ -50,7 +50,7 @@ function M.migrate()
     for i, v in ipairs(M.session_projects) do
       M.session_projects[i] = {
         path = v,
-        name = vim.fn.fnamemodify(v, ':p:h:h:t') .. '/' .. vim.fn.fnamemodify(v, ':p:h:t'),
+        name = ('%s/%s'):format(Util.strip_slash(v, ':p:h:h:t'), Util.strip_slash(v, ':p:h:t')),
       }
     end
 
@@ -75,7 +75,7 @@ function M.rename_project(project, name)
     return false
   end
 
-  project = Util.rstrip('/', vim.fn.fnamemodify(project, ':p'))
+  project = Util.strip_slash(project)
   name = Util.strip(' ', name)
 
   local valid_chars = vim.split(
@@ -263,7 +263,7 @@ function M.export_history_json(path, ind, force_name)
     error(('(%s.export_history_json): Target is a directory! `%s`'):format(MODSTR, path), ERROR)
   end
 
-  path = vim.fn.fnamemodify(path, ':p')
+  path = Util.strip_slash(path)
   if path:sub(-5) ~= '.json' and not force_name then
     path = ('%s.json'):format(path)
   end
@@ -316,7 +316,7 @@ function M.export_history_json(path, ind, force_name)
   uv.fs_write(fd, data)
   uv.fs_close(fd)
 
-  vim.notify(('Exported history to `%s`'):format(vim.fn.fnamemodify(path, ':~')), INFO, {
+  vim.notify(('Exported history to `%s`'):format(Util.strip_slash(path, ':p:~')), INFO, {
     title = 'project.nvim',
   })
 end
@@ -349,7 +349,7 @@ function M.import_history_json(path, force_name)
   if path:sub(-5) ~= '.json' and not force_name then
     path = ('%s.json'):format(path)
   end
-  path = vim.fn.fnamemodify(path, ':p')
+  path = Util.strip_slash(path)
 
   local fd, stat = Path.open_file(path, 'r')
   if not fd then
@@ -376,7 +376,7 @@ function M.import_history_json(path, force_name)
   M.recent_projects = Util.reverse(hist)
   M.write_history()
 
-  vim.notify(('Imported history from `%s`'):format(vim.fn.fnamemodify(path, ':~')), INFO, {
+  vim.notify(('Imported history from `%s`'):format(Util.strip_slash(path, ':p:~')), INFO, {
     title = 'project.nvim',
   })
 end
@@ -608,7 +608,7 @@ function M.get_recent_projects(paths_only, tilde)
   local idx, removed = 1, false
   M.is_legacy(tbl)
   while idx <= #tbl do
-    local v = Util.rstrip('/', M.legacy and tbl[idx] or tbl[idx].path)
+    local v = Util.strip_slash(M.legacy and tbl[idx] or tbl[idx].path)
     if not Path.exists(v) or Path.is_excluded(v) then
       table.remove(tbl, idx)
       removed = true
@@ -625,7 +625,7 @@ function M.get_recent_projects(paths_only, tilde)
   for i, v in ipairs(tbl) do
     local dir = M.legacy and v or v.path
     if Util.dir_exists(dir) then
-      dir = tilde and vim.fn.fnamemodify(dir, ':~') or dir
+      dir = Util.strip_slash(dir, tilde and ':p:~' or nil)
       table.insert(recents, (M.legacy or paths_only) and dir or { path = dir, name = tbl[i].name })
     end
   end
@@ -637,7 +637,7 @@ end
 ---@param path? string
 function M.write_history(path)
   Util.validate({ path = { path, { 'string', 'nil' }, true } })
-  path = Util.rstrip('/', vim.fn.fnamemodify(path or Path.historyfile, ':p'))
+  path = Util.strip_slash(path or Path.historyfile)
 
   if not Path.exists(path) then
     local write_res = vim.fn.writefile({ '[', ']' }, path)
@@ -796,7 +796,7 @@ function M.find_entry(search, value, key)
   local tbl = search == 'session' and M.session_projects or M.recent_projects --[[@as ProjectHistoryEntry[]\]]
   for _, v in ipairs(tbl) do
     ---@cast v ProjectHistoryEntry
-    if v.path == Util.rstrip('/', vim.fn.fnamemodify(value, ':p')) or v.name == value then
+    if v.path == Util.strip_slash(value) or v.name == value then
       return v[key]
     end
   end

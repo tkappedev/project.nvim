@@ -96,8 +96,8 @@ local function open_node(proj, only_cd, ran_cd)
         return item
       end
 
-      item = Util.strip_slash(item, ':~')
-      return vim.fn.fnamemodify(item, ':~') .. (vim.fn.isdirectory(item) == 1 and '/' or '')
+      item = Util.strip_slash(item, ':p:~')
+      return Util.strip_slash(item, ':p:~') .. (vim.fn.isdirectory(item) == 1 and '/' or '')
     end,
   }, function(item) ---@param item string
     if not item or vim.list_contains({ '', 'Exit' }, item) then
@@ -235,7 +235,7 @@ function M.prompt_project(input)
 
   local original_input = input
   input = Util.strip_slash(input)
-  if not (Path.exists(input) and Path.exists(vim.fn.fnamemodify(input, ':p:h'))) then
+  if not (Path.exists(input) and Path.exists(Util.strip_slash(input, ':p:h'))) then
     vim.notify(('Invalid path `%s`'):format(original_input), ERROR)
     return
   end
@@ -578,7 +578,7 @@ M.session_menu = M.select.new({
         if item == 'Exit' or (Config.options.show_by_name and not History.legacy) then
           return item
         end
-        return vim.fn.fnamemodify(item, ':~')
+        return Util.strip_slash(item, ':p:~')
       end,
     }, function(item) ---@param item string
       if not item or item == '' then

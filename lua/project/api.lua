@@ -181,7 +181,7 @@ function M.find_pattern_root(bufnr)
   local bufname = vim.api.nvim_buf_get_name(bufnr)
   local dir = M.check_oil(bufnr) or '' ---@type string
 
-  dir = dir == '' and vim.fn.fnamemodify(bufname, ':p:h') or dir
+  dir = dir == '' and Util.strip_slash(bufname, ':p:h') or dir
   dir = Util.is_windows() and dir:gsub('\\', '/') or dir
   return Path.root_included(dir)
 end
