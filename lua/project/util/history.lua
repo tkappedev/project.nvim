@@ -32,7 +32,6 @@ function M.migrate()
 
   M.read_history()
 
-  local old_recents, recents_migrated = vim.deepcopy(M.recent_projects or {}), false
   if M.recent_projects and Util.same_type_list(M.recent_projects, 'string') then
     for i, v in ipairs(M.recent_projects) do
       M.recent_projects[i] = {
@@ -41,16 +40,9 @@ function M.migrate()
       }
     end
 
-    if not M.is_legacy(M.recent_projects) then
-      M.recent_projects = vim.deepcopy(old_recents)
-      vim.notify(('(%s.migrate): Error while migrating `recent_projects`!'):format(MODSTR))
-      return
-    end
-
-    recents_migrated = true
+    M.is_legacy(M.recent_projects)
   end
 
-  local old_sessions = vim.deepcopy(M.session_projects)
   if
     not vim.tbl_isempty(M.session_projects)
     and Util.same_type_list(M.session_projects, 'string')
@@ -61,15 +53,8 @@ function M.migrate()
         name = vim.fn.fnamemodify(v, ':p:h:h:t') .. '/' .. vim.fn.fnamemodify(v, ':p:h:t'),
       }
     end
-    if not M.is_legacy(M.session_projects) then
-      if recents_migrated then
-        M.recent_projects = old_recents
-      end
-      M.session_projects = old_sessions
 
-      vim.notify(('(%s.migrate): Error while migrating `session_projects`!'):format(MODSTR), ERROR)
-      return
-    end
+    M.is_legacy(M.session_projects)
   end
 
   M.write_history()
