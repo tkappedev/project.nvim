@@ -115,7 +115,7 @@ function M:project_root()
   elseif format == 'full' then
     msg = Util.strip_slash(curr, ':p:~')
   elseif format == 'name' and not History.legacy then
-    msg = History.find_entry('both', curr, 'name')
+    msg = History.find_entry('recent', curr, 'name')
   end
   if format == 'short' or not msg then
     msg = Util.strip_slash(curr, ':p:h:t')

@@ -16,7 +16,7 @@ function M.default(items)
 
   Log.debug(('(%s.default): Running default fzf-lua action.'):format(MODSTR))
   require('fzf-lua').files({
-    cwd = History.find_entry('both', items[1], 'path'),
+    cwd = History.find_entry('recent', items[1], 'path'),
     cwd_only = true,
     silent = Config.options.silent_chdir,
     hidden = Config.options.show_hidden,
@@ -30,7 +30,7 @@ function M.delete_project(items)
   end
 
   for _, item in ipairs(items) do
-    History.delete_project(History.find_entry('both', item, 'path'), true)
+    History.delete_project(History.find_entry('recent', item, 'path'), true)
   end
 end
 
@@ -41,7 +41,7 @@ function M.rename_project(items)
   end
 
   for _, item in ipairs(items) do
-    require('project.popup').rename_input(History.find_entry('both', item, 'path'))
+    require('project.popup').rename_input(History.find_entry('recent', item, 'path'))
   end
 end
 

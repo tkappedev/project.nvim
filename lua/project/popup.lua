@@ -134,7 +134,7 @@ function M.rename_input(project)
   local success = true
   vim.ui.input({
     prompt = ('Input the new name for project %s'):format(
-      History.find_entry('both', project, 'name')
+      History.find_entry('recent', project, 'name')
     ),
   }, function(input)
     if not input or input == '' then
@@ -264,7 +264,7 @@ M.delete_menu = M.select.new({
       prompt = 'Select a project to delete:',
       format_item = function(item) ---@param item string
         if Config.options.show_by_name and not History.legacy then
-          local path = History.find_entry('both', item, 'path')
+          local path = History.find_entry('recent', item, 'path')
           for _, v in ipairs(History.session_projects) do
             ---@cast v ProjectHistoryEntry
             if v.path == path then
@@ -316,7 +316,7 @@ M.delete_menu = M.select.new({
         T[proj] = function() end
       elseif Config.options.show_by_name and not History.legacy then
         T[proj] = function()
-          History.delete_project(History.find_entry('both', proj, 'path'))
+          History.delete_project(History.find_entry('recent', proj, 'path'))
         end
       else
         T[proj] = function()
@@ -351,7 +351,7 @@ M.rename_menu = M.select.new({
 
         vim.ui.input({
           prompt = ('Input the new name for project %s'):format(
-            Config.options.show_by_name and item or History.find_entry('both', item, 'name')
+            Config.options.show_by_name and item or History.find_entry('recent', item, 'name')
           ),
         }, function(input)
           if not input or input == '' then
@@ -386,7 +386,7 @@ M.rename_menu = M.select.new({
         T[proj] = function(name)
           History.rename_project(
             (Config.options.show_by_name and not History.legacy)
-                and History.find_entry('both', proj, 'path')
+                and History.find_entry('recent', proj, 'path')
               or proj,
             name
           )

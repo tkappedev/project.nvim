@@ -92,7 +92,7 @@ function M.pick()
 
         Popup.rename_input(
           vim.fn.expand(item.value),
-          History.find_entry('both', item.value, 'name')
+          History.find_entry('recent', item.value, 'name')
         )
       end,
     },

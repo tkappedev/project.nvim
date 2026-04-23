@@ -253,13 +253,13 @@ function M.set_pwd(dir, method)
   end
   if
     not vim.tbl_contains(History.session_projects, function(val)
-      return vim.deep_equal(History.legacy and val or val.path, dir)
+      return (History.legacy and val or val.path) == dir
     end, { predicate = true })
   then
     table.insert(History.session_projects, History.legacy and dir or {
       path = dir,
-      name = History.find_entry('both', dir, 'name')
-        or vim.fn.fnamemodify(dir, ':p:h:h:t') .. '/' .. vim.fn.fnamemodify(dir, ':p:h:t'),
+      name = History.find_entry('recent', dir, 'name')
+        or Util.strip_slash(dir, ':p:h:h:t') .. '/' .. Util.strip_slash(dir, ':p:h:t'),
     })
     modified = true
     Log.debug(('Added project %s to the top of session list'):format(unexpand_dir))
@@ -439,7 +439,7 @@ function M.get_current_project_name(bufnr)
   end
 
   local curr = M.get_project_root(bufnr)
-  return History.find_entry('both', curr, 'name')
+  return History.find_entry('recent', curr, 'name')
 end
 
 ---@param bufnr? integer
