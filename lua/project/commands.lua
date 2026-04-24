@@ -36,15 +36,13 @@ local function complete_items(_, line)
     return recents
   end
 
-  local i = 1
-  while i <= #recents do
-    if not vim.startswith(recents[i], args[#args]) then
-      table.remove(recents)
-    else
-      i = i + 1
+  local res = {} ---@type string[]
+  for _, recent in ipairs(recents) do
+    if vim.startswith(recent, args[#args]) then
+      table.insert(res, recent)
     end
   end
-  return recents
+  return res
 end
 
 ---@class Project.Commands
@@ -323,8 +321,7 @@ function M.create_user_commands()
         end
 
         if #args == 2 then
-          local res = {} ---@type string[]
-          local options = { 'clear' } ---@type string[]
+          local options, res = { 'clear' }, {} ---@type string[], string[]
           table.insert(options, History.legacy and 'migrate' or 'rename')
 
           for _, choice in ipairs(options) do
