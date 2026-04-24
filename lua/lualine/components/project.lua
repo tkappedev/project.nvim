@@ -49,7 +49,7 @@ local M = require('lualine.component'):extend()
 ---@field enclose_pair? { [1]: string|nil, [2]: string|nil }|nil
 local defaults = {
   separator = ' ',
-  no_project = 'N/A',
+  no_project = '',
   format = 'name',
   enclose_pair = nil,
 }
@@ -77,7 +77,8 @@ function M:init(options)
 end
 
 function M:update_status()
-  if not package.loaded['project'] then
+  local curr = require('project.api').current_project
+  if not (package.loaded['project'] and curr) then
     return self.options.no_project
   end
 
@@ -104,6 +105,10 @@ function M:project_root()
       and self.options.format
     or 'short'
 
+  if not Api.get_project_root(vim.api.nvim_get_current_buf()) then
+    return self.options.no_project
+  end
+
   if
     not in_list({ 'short', 'full', 'full_expanded', 'name' }, format)
     or not (curr and root)
@@ -117,7 +122,7 @@ function M:project_root()
   elseif format == 'name' and not History.legacy then
     msg = History.find_entry('recent', curr, 'name')
   end
-  if format == 'short' or not msg then
+  if format == 'short' or not msg and msg ~= self.options.no_project then
     msg = Util.strip_slash(curr, ':p:h:t')
   end
 
