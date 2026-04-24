@@ -1,6 +1,5 @@
----For newcommers, in the original `project.nvim` this file was
----`project.lua`. I decided to make this an API file instead
----to avoid any confusions with naming,
+---For newcommers, in the original `project.nvim` this file was `project.lua`.
+---I decided to make this an API file instead to avoid any confusions with naming,
 ---e.g. `require('project_nvim.project')`.
 
 ---@module 'project._meta'
@@ -17,7 +16,7 @@ local Log = require('project.util.log')
 
 ---The `project.nvim` API module.
 --- ---
----@class Project.API
+---@class Project.Core
 ---@field public current_method string|nil
 ---@field public current_project string|nil
 ---@field public last_project string|nil
@@ -114,7 +113,7 @@ function M.get_last_project(entry)
 end
 
 ---@overload fun(): history_paths: HistoryPath
----@overload fun(path: ProjectPaths): string
+---@overload fun(path: ProjectPaths): history_paths: string
 ---@nodiscard
 function M.get_history_paths(path)
   Util.validate({ path = { path, { 'string', 'nil' }, true } })
@@ -125,7 +124,7 @@ function M.get_history_paths(path)
     historyfile = Path.historyfile,
   }
   if path and vim.list_contains(vim.tbl_keys(res), path) then
-    return Path[path]
+    return Path[path] --[[@as string]]
   end
   return res
 end
@@ -179,11 +178,9 @@ function M.find_pattern_root(bufnr)
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
   local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local dir = M.check_oil(bufnr) or '' ---@type string
-
-  dir = dir == '' and Util.strip_slash(bufname, ':p:h') or dir
-  dir = Util.is_windows() and dir:gsub('\\', '/') or dir
-  return Path.root_included(dir)
+  local dir = M.check_oil(bufnr) or bufname
+  dir = vim.fn.isdirectory(dir) == 1 and dir or Util.strip_slash(dir, ':p:h') ---@type string
+  return Path.root_included(Util.is_windows() and dir:gsub('\\', '/') or dir)
 end
 
 ---@param bufnr? integer
@@ -246,11 +243,9 @@ function M.set_pwd(dir, method)
     end
   end
 
-  local modified = false
-  local unexpand_dir = Util.strip_slash(dir, ':p:~')
-  if not History.session_projects then
-    History.session_projects = {}
-  end
+  History.session_projects = History.session_projects or {}
+
+  local unexpand_dir, modified = Util.strip_slash(dir, ':p:~'), false
   if
     not vim.tbl_contains(History.session_projects, function(val)
       return (History.legacy and val or val.path) == dir
@@ -265,12 +260,10 @@ function M.set_pwd(dir, method)
     Log.debug(('Added project %s to the top of session list'):format(unexpand_dir))
   end
   if not modified and #History.session_projects > 1 then
-    local name = ''
-    local old_pos = nil ---@type integer|nil
+    local old_pos, name = nil, '' ---@type integer|nil, string
     for k, v in ipairs(History.session_projects) do
-      local v_dir = History.legacy and v or v.path
-      if v_dir == dir then
-        old_pos = k --[[@as integer]]
+      if (History.legacy and v or v.path) == dir then
+        old_pos = k
         if not History.legacy then
           name = v.name
         end
@@ -290,13 +283,12 @@ function M.set_pwd(dir, method)
     end
   end
 
-  if Config.options.before_attach then
+  if Config.options.before_attach and vim.is_callable(Config.options.before_attach) then
     Config.options.before_attach(dir, method)
     Log.debug('Ran `before_attach` hook successfully.')
   end
 
-  local cwd = uv.cwd() or vim.fn.getcwd()
-  if dir == Util.strip_slash('/', cwd) then
+  if dir == Util.strip_slash(uv.cwd() or vim.fn.getcwd()) then
     M.current_project = dir
     M.current_method = method
     if vim.g.project_cwd_log ~= 1 then
@@ -474,7 +466,7 @@ function M.on_buf_enter(bufnr)
   History.write_history()
 end
 
-function M.init()
+function M.setup()
   local group = vim.api.nvim_create_augroup('project.nvim', { clear = true })
   vim.api.nvim_create_autocmd('VimLeavePre', {
     group = group,

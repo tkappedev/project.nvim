@@ -14,9 +14,8 @@ function M.strip_slash(path, mods)
     path = { path, { 'string' } },
     mods = { mods, { 'string', 'nil' }, true },
   })
-  mods = (mods and mods ~= '') and mods or ':p' --[[@as string]]
 
-  return M.rstrip('/', vim.fn.fnamemodify(path, mods))
+  return M.rstrip('/', vim.fn.fnamemodify(path, (mods and mods ~= '') and mods or ':p'))
 end
 
 ---@param s string
@@ -42,12 +41,11 @@ function M.only_has_chars(s, chars, extra_allowed)
     extra_allowed.newlines = false
   end
 
-  if s == '' or chars == '' then
+  if vim.list_contains({ s, chars }, '') then
     return false
   end
 
-  local chars_list = M.dedup(vim.split(chars, '', { trimempty = true }))
-  local i = 1
+  local chars_list, i = M.dedup(vim.split(chars, '', { trimempty = true })), 1
   while i <= #chars_list do
     if chars_list[i] == '\n' then
       table.remove(chars_list, i)
@@ -66,8 +64,7 @@ function M.only_has_chars(s, chars, extra_allowed)
     table.insert(chars_list, '\n')
   end
 
-  local str_list = vim.split(s, '', { trimempty = false })
-  for _, c in ipairs(str_list) do
+  for _, c in ipairs(vim.split(s, '', { trimempty = false })) do
     if not vim.list_contains(chars_list, c) then
       return false
     end
@@ -141,16 +138,15 @@ function M.optget(option, param, param_value)
   if param == 'ft' and (not param_value or type(param_value) ~= 'string') then
     error('Missing/bad value for `ft` parameter!', ERROR)
   end
-  if vim.list_contains({ 'win', 'buf' }, param) then
-    if
-      not (
-        param_value
-        and type(param_value) == 'number'
-        and M.is_int(param_value, param_value >= 0)
-      )
-    then
-      error('Missing/bad value for `win`/`buf` parameter!', ERROR)
-    end
+  if
+    vim.list_contains({ 'win', 'buf' }, param)
+    and not (
+      param_value
+      and type(param_value) == 'number'
+      and M.is_int(param_value, param_value >= 0)
+    )
+  then
+    error('Missing/bad value for `win`/`buf` parameter!', ERROR)
   end
 
   return vim.api.nvim_get_option_value(option, { [param] = param_value })
@@ -170,6 +166,7 @@ function M.optset(option, value, param, param_value)
     error('Empty option value is unacceptable!', ERROR)
   end
   param = param or 'buf'
+
   if not vim.list_contains({ 'scope', 'ft', 'buf', 'win' }, param) then
     error(
       ('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(
@@ -178,6 +175,7 @@ function M.optset(option, value, param, param_value)
       ERROR
     )
   end
+
   if param == 'scope' then
     param_value = param_value or 'local'
     if not vim.list_contains({ 'global', 'local' }, param_value) then
@@ -192,16 +190,15 @@ function M.optset(option, value, param, param_value)
   if param == 'ft' and (not param_value or type(param_value) ~= 'string') then
     error('Missing/bad value for `ft` parameter!', ERROR)
   end
-  if vim.list_contains({ 'win', 'buf' }, param) then
-    if
-      not (
-        param_value
-        and type(param_value) == 'number'
-        and M.is_int(param_value, param_value >= 0)
-      )
-    then
-      error('Missing/bad value for `win`/`buf` parameter!', ERROR)
-    end
+  if
+    vim.list_contains({ 'win', 'buf' }, param)
+    and not (
+      param_value
+      and type(param_value) == 'number'
+      and M.is_int(param_value, param_value >= 0)
+    )
+  then
+    error('Missing/bad value for `win`/`buf` parameter!', ERROR)
   end
 
   vim.api.nvim_set_option_value(option, value, { [param] = param_value })
@@ -247,7 +244,8 @@ function M.vim_has(feature)
   return vim.fn.has(feature) == 1
 end
 
----Dynamic `vim.validate()` wrapper. Covers both legacy and newer implementations
+---Dynamic `vim.validate()` wrapper. Covers both legacy and newer implementations.
+--- ---
 ---@param T table<string, vim.validate.Spec|ValidateSpec>
 function M.validate(T)
   local max = vim.fn.has('nvim-0.11') == 1 and 3 or 4
@@ -294,11 +292,9 @@ function M.capitalize(str, use_dot, triggers)
     use_dot = { use_dot, { 'boolean', 'nil' }, true },
     triggers = { triggers, { 'table', 'nil' }, true },
   })
-
   if str == '' then
     return str
   end
-
   if use_dot == nil then
     use_dot = false
   end
@@ -310,9 +306,7 @@ function M.capitalize(str, use_dot, triggers)
     table.insert(triggers, '')
   end
 
-  local strlen = str:len()
-  local prev_char, new_str, i = '', '', 1
-  local dot = true
+  local prev_char, new_str, i, strlen, dot = '', '', 1, str:len(), true
   while i <= strlen do
     local char = str:sub(i, i)
     if char == char:lower() and vim.list_contains(triggers, prev_char) then
@@ -340,6 +334,8 @@ end
 ---@return boolean correct_type
 ---@nodiscard
 function M.is_type(t, data)
+  M.validate({ t = { t, { 'string' } } })
+
   return data ~= nil and type(data) == t
 end
 
@@ -361,9 +357,8 @@ function M.reverse(T)
     return T
   end
 
-  local len = #T
-  for i = 1, math.floor(len / 2) do
-    T[i], T[len - i + 1] = T[len - i + 1], T[i]
+  for i = 1, math.floor(#T / 2) do
+    T[i], T[#T - i + 1] = T[#T - i + 1], T[i]
   end
   return T
 end
@@ -374,11 +369,11 @@ end
 function M.get_dict_size(T)
   M.validate({ T = { T, { 'table' } } })
 
-  local len = 0
   if vim.tbl_isempty(T) then
-    return len
+    return 0
   end
 
+  local len = 0
   for _ in pairs(T) do
     len = len + 1
   end
@@ -430,12 +425,9 @@ end
 
 ---Emulates the behaviour of Python's builtin `range()` function.
 --- ---
----@param x integer
----@param y integer
----@param step integer
----@return integer[] range_list
 ---@overload fun(x: integer): range_list: integer[]
 ---@overload fun(x: integer, y: integer): range_list: integer[]
+---@overload fun(x: integer, y: integer, step: integer): range_list: integer[]
 ---@nodiscard
 function M.range(x, y, step)
   M.validate({
@@ -499,9 +491,6 @@ end
 
 ---Attempt to find out if given path is a hidden file.
 ---**Works only Windows, currently!**
----
----CREDITS:
----https://github.com/nvim-neo-tree/neo-tree.nvim/blob/8dd9f08ff086d09d112f1873f88dc0f74b598cdb/lua/neo-tree/utils/init.lua#L1299
 --- ---
 ---@param path string
 ---@return boolean hidden
@@ -519,11 +508,8 @@ function M.is_hidden(path)
     ]])
   end
 
-  if M.is_windows() then
-    if ffi then
-      return bit.band(ffi.C.GetFileAttributesA(path), FILE_ATTRIBUTE_HIDDEN) ~= 0
-    end
-    return false -- FIXME: Find a reliable alternative
+  if M.is_windows() and ffi then
+    return bit.band(ffi.C.GetFileAttributesA(path), FILE_ATTRIBUTE_HIDDEN) ~= 0
   end
 
   return false --- TODO: Find a reliable method for UNIX systems
@@ -616,8 +602,7 @@ function M.lstrip(char, str)
   end
 
   ---@cast char string
-  local i, len, new_str = 1, str:len(), ''
-  local other = false
+  local i, len, new_str, other = 1, str:len(), '', false
   while i <= len and i + char:len() - 1 <= len do
     if str:sub(i, i + char:len() - 1) ~= char and not other then
       other = true
@@ -808,7 +793,6 @@ function M.path_exists(path)
   if M.dir_exists(path) then
     return true
   end
-
   return vim.fn.filereadable(path) == 1
 end
 
@@ -818,10 +802,8 @@ function M.normalise_path(path)
   M.validate({ path = { path, { 'string' } } })
 
   local normalised_path = path:gsub('\\', '/'):gsub('//', '/')
-  if M.is_windows() then
-    normalised_path = normalised_path:sub(1, 1):lower() .. normalised_path:sub(2)
-  end
-  return normalised_path
+  return M.is_windows() and normalised_path:sub(1, 1):lower() .. normalised_path:sub(2)
+    or normalised_path
 end
 
 return M

@@ -22,6 +22,24 @@ M.last_dir_cache = ''
 M.curr_dir_cache = {}
 M.exists = Util.path_exists
 
+---@param mode string
+---@return integer|nil mode_num
+function M.open_mode(mode)
+  Util.validate({ mode = { mode, { 'string' } } })
+  if mode == '' or mode:len() ~= 3 then
+    return
+  end
+
+  for _, c in ipairs(vim.split(mode, '', { trimempty = false })) do
+    local ok, cnum = pcall(tonumber, c, 10) ---@type boolean, integer|nil
+    if not (ok and cnum) or cnum < 0 or cnum > 7 then
+      return
+    end
+  end
+
+  return tonumber(mode, 8)
+end
+
 ---@param path string
 ---@param flags uv.fs_open.flags
 ---@param mode? integer
@@ -33,7 +51,7 @@ function M.open_file(path, flags, mode)
     flags = { flags, { 'string', 'number' } },
     mode = { mode, { 'number', 'nil' }, true },
   })
-  mode = (mode and Util.is_int(mode)) and mode or tonumber('644', 8)
+  mode = (mode and Util.is_int(mode)) and mode or M.open_mode('644')
   if not M.exists(path) then
     return
   end
@@ -210,7 +228,7 @@ function M.create_path(path)
     require('project.util.log').debug(
       ('(%s.create_path): Creating directory `%s`.'):format(MODSTR, path)
     )
-    uv.fs_mkdir(path, tonumber('755', 8))
+    uv.fs_mkdir(path, M.open_mode('755'))
   end
 end
 
@@ -253,7 +271,7 @@ end
 
 ---@param save_dir string
 ---@param save_file string
-function M.init(save_dir, save_file)
+function M.setup(save_dir, save_file)
   local Defaults = require('project.config.defaults')
   Util.validate({
     save_dir = { save_dir, { 'string' } },
@@ -264,20 +282,20 @@ function M.init(save_dir, save_file)
   if not (vim.fn.mkdir(M.datapath, 'p') == 1 or M.exists(M.datapath)) then
     M.datapath = Defaults.history.save_dir
     if not (vim.fn.mkdir(M.datapath, 'p') == 1 or M.exists(M.datapath)) then
-      error('(%s.init): Unable to create history directory!', ERROR)
+      error('(%s.setup): Unable to create history directory!', ERROR)
     end
   end
 
   M.projectpath = M.join(M.datapath, 'project_nvim')
   if not (M.exists(M.projectpath) or vim.fn.mkdir(M.projectpath, 'p') == 1) then
-    error('(%s.init): Unable to create history subdirectory!', ERROR)
+    error('(%s.setup): Unable to create history subdirectory!', ERROR)
   end
 
   M.historyfile = M.join(M.projectpath, save_file)
   if not M.exists(M.historyfile) then
-    local fd = uv.fs_open(M.historyfile, 'w', tonumber('644', 8))
+    local fd = uv.fs_open(M.historyfile, 'w', M.open_mode('644'))
     if not fd then
-      error('(%s.init): Unable to create history file!', ERROR)
+      error('(%s.setup): Unable to create history file!', ERROR)
     end
 
     uv.fs_write(fd, '[]')

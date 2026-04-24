@@ -10,16 +10,16 @@ local Path = require('project.util.path')
 local Log = require('project.util.log')
 
 ---@class Project.Util.History
----@field has_watch_setup? boolean
----@field historysize? integer
----@field legacy? boolean
+---@field public has_watch_setup? boolean
+---@field public historysize? integer
+---@field public legacy? boolean
 ---Projects from previous neovim sessions.
 --- ---
----@field recent_projects? string[]|ProjectHistoryEntry[]
+---@field public recent_projects? string[]|ProjectHistoryEntry[]
 ---Projects from current neovim session.
 --- ---
----@field session_projects string[]|ProjectHistoryEntry[]
----@field window? Project.HistoryWin
+---@field public session_projects string[]|ProjectHistoryEntry[]
+---@field public window? Project.HistoryWin
 local M = {}
 
 M.session_projects = {}
@@ -152,7 +152,7 @@ function M.clear_historyfile(force)
     end
   end
 
-  local fd = Path.open_file(Path.historyfile, 'w', tonumber('644', 8))
+  local fd = Path.open_file(Path.historyfile, 'w', Path.open_mode('644'))
   if not fd then
     Log.error(('(%s.clear_historyfile): Unable to clear history file!'):format(MODSTR))
     vim.notify('(project.nvim): Unable to clear history file!', ERROR)
@@ -239,7 +239,7 @@ function M.export_history_json(path, ind, force_name)
   end
   if Util.is_type('string', ind) then
     ---@cast ind string
-    ind = math.floor(tonumber(ind, 10))
+    ind = math.floor(Path.open_mode(ind))
   end
 
   if vim.g.project_setup ~= 1 then

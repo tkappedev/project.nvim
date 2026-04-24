@@ -40,11 +40,11 @@ function M.setup(options)
   vim.o.autochdir = M.options.enable_autochdir
 
   -- WARN: THIS GOES FIRST!!!!
-  require('project.util.path').init(M.options.history.save_dir, M.options.history.save_file)
+  require('project.util.path').setup(M.options.history.save_dir, M.options.history.save_file)
 
   local Log = require('project.util.log')
   if M.options.log.enabled then
-    Log.init()
+    Log.setup()
     Log.debug(('(%s.setup): Initialized logging.'):format(MODSTR))
   end
 
@@ -56,7 +56,7 @@ function M.setup(options)
   Log.debug(('(%s.setup): User commands created.'):format(MODSTR))
   require('project.commands').create_user_commands()
 
-  require('project.core').init()
+  require('project.core').setup()
 
   if M.options.fzf_lua.enabled then
     Log.debug(('(%s.setup): fzf-lua integration enabled.'):format(MODSTR))

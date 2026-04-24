@@ -8,7 +8,6 @@ local Util = require('project.util')
 local Popup = require('project.popup')
 local History = require('project.util.history')
 local Core = require('project.core')
-local Path = require('project.util.path')
 local Log = require('project.util.log')
 local Config = require('project.config')
 

@@ -1,17 +1,15 @@
 ---@module 'project._meta'
 
--- stylua: ignore start
-local uv     =  vim.uv or vim.loop
+local uv = vim.uv or vim.loop
 local MODSTR = 'project.util.log'
-local TRACE  =  vim.log.levels.TRACE  -- `0`
-local DEBUG  =  vim.log.levels.DEBUG  -- `1`
-local INFO   =  vim.log.levels.INFO   -- `2`
-local WARN   =  vim.log.levels.WARN   -- `3`
-local ERROR  =  vim.log.levels.ERROR  -- `4`
--- stylua: ignore end
-
+local TRACE = vim.log.levels.TRACE -- `0`
+local DEBUG = vim.log.levels.DEBUG -- `1`
+local INFO = vim.log.levels.INFO -- `2`
+local WARN = vim.log.levels.WARN -- `3`
+local ERROR = vim.log.levels.ERROR -- `4`
 local Util = require('project.util')
 local Config = require('project.config')
+local Path = require('project.util.path')
 
 ---@class Project.Log
 ---@field public logfile? string
@@ -70,8 +68,7 @@ function M.read_log()
 end
 
 function M.clear_log()
-  local success = uv.fs_unlink(M.logfile)
-  if success then
+  if uv.fs_unlink(M.logfile) then
     vim.notify('(project.nvim): Log cleared successfully', INFO)
     vim.g.project_log_cleared = 1
   end
@@ -106,7 +103,7 @@ function M.timer_cb()
     return
   end
 
-  local fd = uv.fs_open(M.logfile, 'w', tonumber('644', 8))
+  local fd = uv.fs_open(M.logfile, 'w', Path.open_mode('644'))
   if not fd then
     return
   end
@@ -161,15 +158,13 @@ function M.write(data, lvl)
     return
   end
 
-    -- stylua: ignore start
-    local PFX = {
-        [TRACE] = '[TRACE] ',
-        [DEBUG] = '[DEBUG] ',
-        [INFO]  = '[INFO]  ',
-        [WARN]  = '[WARN]  ',
-        [ERROR] = '[ERROR] ',
-    }
-  -- stylua: ignore end
+  local PFX = {
+    [TRACE] = '[TRACE] ',
+    [DEBUG] = '[DEBUG] ',
+    [INFO] = '[INFO]  ',
+    [WARN] = '[WARN]  ',
+    [ERROR] = '[ERROR] ',
+  }
 
   local msg = os.date(('%s  ==>  %s%s'):format('%H:%M:%S', PFX[lvl], data)) --[[@as string]]
   uv.fs_write(fd, msg, -1)
@@ -233,25 +228,25 @@ end
 ---@return integer|nil fd
 ---@return uv.fs_stat.result|nil stat
 function M.open(mode)
-  require('project.util.path').create_path(M.logpath)
+  Path.create_path(M.logpath)
   local dir_stat = uv.fs_stat(M.logpath)
   if not dir_stat or dir_stat.type ~= 'directory' then
     error(('(%s.open): Projectpath stat is not valid!'):format(MODSTR), ERROR)
   end
 
   local stat = uv.fs_stat(M.logfile)
-  local fd = uv.fs_open(M.logfile, mode, tonumber('644', 8))
+  local fd = uv.fs_open(M.logfile, mode, Path.open_mode('644'))
   return fd, stat
 end
 
-function M.init()
+function M.setup()
   local log_cfg = Config.options.log or {}
   if not log_cfg.enabled then
     return
   end
   M.logpath = log_cfg.logpath
   M.logfile = M.logpath .. '/project.log'
-  require('project.util.path').create_path(M.logpath)
+  Path.create_path(M.logpath)
 
   local fd
   local stat = uv.fs_stat(M.logfile)
@@ -283,7 +278,7 @@ function M.open_win()
     vim.notify(('(%s.open_win): Log has been cleared. Try restarting.'):format(MODSTR), WARN)
     return
   end
-  if not require('project.util.path').exists(M.logfile) then
+  if not Path.exists(M.logfile) then
     error(('(%s.open_win): Bad logfile path!'):format(MODSTR), ERROR)
   end
 
@@ -296,7 +291,7 @@ function M.open_win()
     return
   end
 
-  local fd = uv.fs_open(M.logfile, 'r', tonumber('644', 8))
+  local fd = uv.fs_open(M.logfile, 'r', Path.open_mode('644'))
   if not fd then
     return
   end
