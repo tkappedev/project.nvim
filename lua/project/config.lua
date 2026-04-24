@@ -56,7 +56,7 @@ function M.setup(options)
   Log.debug(('(%s.setup): User commands created.'):format(MODSTR))
   require('project.commands').create_user_commands()
 
-  require('project.api').init()
+  require('project.core').init()
 
   if M.options.fzf_lua.enabled then
     Log.debug(('(%s.setup): fzf-lua integration enabled.'):format(MODSTR))

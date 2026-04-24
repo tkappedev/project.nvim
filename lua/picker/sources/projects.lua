@@ -14,7 +14,7 @@ local Config = require('project.config')
 local function gen_items(source)
   local History = require('project.util.history')
   local items = {} ---@type ProjectPickerItem[]
-  local curr = require('project.api').get_current_project() or ''
+  local curr = require('project.core').get_current_project() or ''
   for i, v in ipairs(source) do
     local is_curr ---@type boolean
     if History.legacy then
@@ -80,7 +80,7 @@ function M.actions()
       if not Util.yes_no('Change cwd to `%s`?', Util.strip_slash(entry.value, ':p:~')) then
         return
       end
-      require('project.api').set_pwd(entry.value, 'picker.nvim')
+      require('project.core').set_pwd(entry.value, 'picker.nvim')
     end,
   }
 end
@@ -91,7 +91,7 @@ function M.default_action(entry)
     return
   end
 
-  require('project.api').set_pwd(entry.value, 'picker.nvim')
+  require('project.core').set_pwd(entry.value, 'picker.nvim')
   require('picker').open({ 'files' })
 end
 

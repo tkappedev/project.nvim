@@ -19,7 +19,7 @@ local Generate = require('telescope.actions.generate')
 local Builtin = require('telescope.builtin')
 local State = require('telescope.actions.state')
 local History = require('project.util.history')
-local Api = require('project.api')
+local Core = require('project.core')
 local Config = require('project.config')
 local Util = require('project.util')
 local make_display = require('telescope._extensions.projects.util').make_display
@@ -94,7 +94,7 @@ function M.change_working_directory(prompt_bufnr)
     return
   end
 
-  local cd_successful = Api.set_pwd(selected_entry.value, 'telescope')
+  local cd_successful = Core.set_pwd(selected_entry.value, 'telescope')
   if cd_successful then
     Log.info(('(%s.change_working_directory): Successfully changed directory.'):format(MODSTR))
   else

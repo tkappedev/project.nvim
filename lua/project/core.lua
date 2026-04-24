@@ -5,7 +5,7 @@
 
 ---@module 'project._meta'
 
-local MODSTR = 'project.api'
+local MODSTR = 'project.core'
 local ERROR = vim.log.levels.ERROR
 local INFO = vim.log.levels.INFO
 local uv = vim.uv or vim.loop

@@ -74,12 +74,12 @@ end
 function M.pick()
   local History = require('project.util.history')
   local Popup = require('project.popup')
-  local Api = require('project.api')
+  local Core = require('project.core')
   return require('snacks').picker.pick({
     actions = {
       chdir_only = function(self, item)
         self:close()
-        Api.set_pwd(item.value, 'snacks')
+        Core.set_pwd(item.value, 'snacks')
       end,
       delete_project = function(self, item)
         self:close()
@@ -98,7 +98,7 @@ function M.pick()
     },
     confirm = function(self, item)
       self:close()
-      if require('project.api').set_pwd(vim.fn.expand(item.value), 'snacks') then
+      if require('project.core').set_pwd(vim.fn.expand(item.value), 'snacks') then
         Log.debug(('(%s.pick): Opening Snacks picker'):format(MODSTR))
         require('snacks').picker.files({
           cwd = uv.cwd() or vim.fn.getcwd(),

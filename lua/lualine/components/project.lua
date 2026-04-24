@@ -77,7 +77,7 @@ function M:init(options)
 end
 
 function M:update_status()
-  local curr = require('project.api').current_project
+  local curr = require('project.core').current_project
   if not (package.loaded['project'] and curr) then
     return self.options.no_project
   end
@@ -95,9 +95,9 @@ function M:project_root()
     return msg
   end
 
-  local Api = require('project.api')
+  local Core = require('project.core')
   local History = require('project.util.history')
-  local curr, root = Api.get_current_project(bufnr), Api.get_project_root(bufnr)
+  local curr, root = Core.get_current_project(bufnr), Core.get_project_root(bufnr)
   local format = (
     self.options.format
     and vim.list_contains({ 'short', 'full', 'full_expanded', 'name' }, self.options.format)
@@ -105,7 +105,7 @@ function M:project_root()
       and self.options.format
     or 'short'
 
-  if not Api.get_project_root(vim.api.nvim_get_current_buf()) then
+  if not Core.get_project_root(vim.api.nvim_get_current_buf()) then
     return self.options.no_project
   end
 

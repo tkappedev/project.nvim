@@ -1,7 +1,7 @@
 local MODSTR = 'project'
 local WARN = vim.log.levels.WARN
 local ERROR = vim.log.levels.ERROR
-local Api = require('project.api')
+local Core = require('project.core')
 local Config = require('project.config')
 local History = require('project.util.history')
 local Popup = require('project.popup')
@@ -15,9 +15,9 @@ local M = {}
 M.delete_menu = Popup.delete_menu
 M.delete_project = History.delete_project
 M.get_config = Config.get_config
-M.get_history_paths = Api.get_history_paths
-M.get_last_project = Api.get_last_project
-M.get_project_root = Api.get_project_root
+M.get_history_paths = Core.get_history_paths
+M.get_last_project = Core.get_last_project
+M.get_project_root = Core.get_project_root
 M.get_recent_projects = History.get_recent_projects
 M.open_menu = Popup.open_menu
 M.recents_menu = Popup.recents_menu
@@ -41,11 +41,11 @@ function M.current_project(refresh)
   local Log = require('project.util.log')
   if refresh then
     Log.debug(('(%s.current_project): Refreshing current project info.'):format(MODSTR))
-    return Api.get_current_project()
+    return Core.get_current_project()
   end
 
   Log.debug(('(%s.current_project): Not refreshing current project info.'):format(MODSTR))
-  return Api.current_project, Api.current_method, Api.last_project
+  return Core.current_project, Core.current_method, Core.last_project
 end
 
 ---Removes specific root patterns from `project.nvim`'s config.

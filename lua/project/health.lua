@@ -7,7 +7,7 @@ local Config = require('project.config')
 local Path = require('project.util.path')
 local History = require('project.util.history')
 local Log = require('project.util.log')
-local Api = require('project.api')
+local Core = require('project.core')
 
 ---@class Project.Health
 local M = {}
@@ -126,7 +126,7 @@ end
 
 function M.project_check()
   vim.health.start('Current Project')
-  local curr, method, last = Api.current_project, Api.current_method, Api.last_project
+  local curr, method, last = Core.current_project, Core.current_method, Core.last_project
   local msg = ('Current project: `%s`\n'):format(curr and curr or 'No Current Project')
   msg = ('%sMethod used: `%s`\n'):format(msg, (method and method or 'No method available'))
   msg = ('%sLast project: `%s`'):format(msg, (last and last or 'No Last Project In History'))

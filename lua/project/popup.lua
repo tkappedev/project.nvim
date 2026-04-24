@@ -55,7 +55,7 @@ local function open_node(proj, only_cd, ran_cd)
   })
 
   if not ran_cd then
-    if not require('project.api').set_pwd(proj, 'prompt') then
+    if not require('project.core').set_pwd(proj, 'prompt') then
       vim.notfy('(open_node): Unsucessful `set_pwd`!', ERROR)
       return
     end
@@ -247,13 +247,13 @@ function M.prompt_project(input)
     end
   end
 
-  local Api = require('project.api')
+  local Core = require('project.core')
   local session = History.session_projects
-  if Api.current_project == input or vim.list_contains(session, input) then
+  if Core.current_project == input or vim.list_contains(session, input) then
     vim.notify('Already added that directory!', WARN)
     return
   end
-  Api.set_pwd(input, 'prompt')
+  Core.set_pwd(input, 'prompt')
   History.write_history()
 end
 
@@ -407,7 +407,7 @@ M.recents_menu = M.select.new({
           return item
         end
 
-        local curr = require('project.api').current_project or ''
+        local curr = require('project.core').current_project or ''
         local entry = History.find_entry('recent', item, 'path')
         return (entry == curr and '* ' or '') .. item
       end,

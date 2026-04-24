@@ -8,7 +8,7 @@ end
 local Log = require('project.util.log')
 local Util = require('project.util')
 local Config = require('project.config')
-local Api = require('project.api')
+local Core = require('project.core')
 if not Util.mod_exists('telescope') then
   Log.error(('(%s): Telescope is not installed!'):format(MODSTR))
   vim.notify(('(%s): Telescope is not installed!'):format(MODSTR), ERROR)
@@ -68,7 +68,7 @@ local function normal_attach(prompt_bufnr, map)
   Actions.select_default:replace(function()
     if Config.options.telescope.disable_file_picker then
       local entry = State.get_selected_entry()
-      Api.set_pwd(entry.value, 'telescope')
+      Core.set_pwd(entry.value, 'telescope')
       return require('telescope.actions.set').select(prompt_bufnr, 'default')
     end
 

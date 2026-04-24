@@ -7,7 +7,7 @@ local uv = vim.uv or vim.loop
 local Util = require('project.util')
 local Popup = require('project.popup')
 local History = require('project.util.history')
-local Api = require('project.api')
+local Core = require('project.core')
 local Path = require('project.util.path')
 local Log = require('project.util.log')
 local Config = require('project.config')
@@ -173,12 +173,12 @@ function M.create_user_commands()
           input = Util.strip_slash(input)
           if Util.dir_exists(input) then
             if
-              Api.current_project ~= input
+              Core.current_project ~= input
               and not vim.tbl_contains(session, function(val)
                 return vim.deep_equal(val, input)
               end, { predicate = true })
             then
-              Api.set_pwd(input, 'command')
+              Core.set_pwd(input, 'command')
               History.write_history()
             else
               msg = ('%s%sAlready added `%s`!'):format(msg, msg == '' and '' or '\n', input)
@@ -449,7 +449,7 @@ This command has been deprecated, use `:ProjectHistory rename [...]` instead.
       bang = true,
       callback = function(ctx)
         local old_cwd = uv.cwd() or vim.fn.getcwd()
-        Api.on_buf_enter()
+        Core.on_buf_enter()
 
         local cwd = uv.cwd() or vim.fn.getcwd()
         if cwd == old_cwd then

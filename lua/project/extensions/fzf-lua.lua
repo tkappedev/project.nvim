@@ -118,7 +118,7 @@ function M.run_fzf_lua()
             return
           end
 
-          require('project.api').set_pwd(items[1], 'fzf-lua')
+          require('project.core').set_pwd(items[1], 'fzf-lua')
         end,
         Fzf.actions.resume,
       },

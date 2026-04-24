@@ -863,7 +863,7 @@ set by the user.
 The command is like doing the following in the cmdline:
 
 ```vim
-:lua require('project.api').on_buf_enter()
+:lua require('project.core').on_buf_enter()
 ```
 
 See [_`commands.lua`_](https://github.com/DrKJeff16/project.nvim/blob/main/lua/project/commands.lua) for more info.
@@ -917,12 +917,11 @@ for more info.
 
 ## API
 
-The API can be found in [_`api.lua`_](https://github.com/DrKJeff16/project.nvim/blob/main/lua/project/api.lua).
+The API can be found in [_`core.lua`_](https://github.com/DrKJeff16/project.nvim/blob/main/lua/project/core.lua).
 
 ### `get_project_root()`
 
-`get_project_root()` is an [API](https://github.com/DrKJeff16/project.nvim/blob/main/lua/project/api.lua) utility
-for finding out about the current project's root, if any:
+`get_project_root()` is an API utility for finding out about the current project's root, if any:
 
 ```lua
 ---@type string|nil, string|nil
