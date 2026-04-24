@@ -537,7 +537,7 @@ function M.executable(exe)
   return res
 end
 
----@generic T
+---@generic T: table
 ---@param tbl T
 ---@return T res
 ---@nodiscard
@@ -790,10 +790,7 @@ end
 function M.path_exists(path)
   M.validate({ path = { path, { 'string' } } })
 
-  if M.dir_exists(path) then
-    return true
-  end
-  return vim.fn.filereadable(path) == 1
+  return M.dir_exists(path) or vim.fn.filereadable(path) == 1
 end
 
 ---@param path string
