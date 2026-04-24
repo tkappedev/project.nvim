@@ -6,6 +6,15 @@ local ERROR = vim.log.levels.ERROR
 ---@class Project.Util
 local M = {}
 
+---@param bufnr integer
+---@return boolean valid
+---@nodiscard
+function M.buffer_valid(bufnr)
+  M.validate({ bufnr = { bufnr, { 'number' } } })
+
+  return vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr)
+end
+
 ---@param path string
 ---@param mods? string
 ---@return string str
@@ -45,27 +54,25 @@ function M.only_has_chars(s, chars, extra_allowed)
     return false
   end
 
-  local chars_list, i = M.dedup(vim.split(chars, '', { trimempty = true })), 1
-  while i <= #chars_list do
-    if chars_list[i] == '\n' then
-      table.remove(chars_list, i)
-    else
-      i = i + 1
+  local ch_list = {} ---@type string[]
+  for _, v in ipairs(M.dedup(vim.split(chars, '', { trimempty = true }))) do
+    if not (vim.list_contains({ ' ', '\n' }, v) or vim.list_contains(ch_list, v)) then
+      table.insert(ch_list, v)
     end
   end
-  if vim.tbl_isempty(chars_list) then
+  if vim.tbl_isempty(ch_list) then
     return false
   end
 
   if extra_allowed.spaces then
-    table.insert(chars_list, ' ')
+    table.insert(ch_list, ' ')
   end
   if extra_allowed.newlines then
-    table.insert(chars_list, '\n')
+    table.insert(ch_list, '\n')
   end
 
   for _, c in ipairs(vim.split(s, '', { trimempty = false })) do
-    if not vim.list_contains(chars_list, c) then
+    if not vim.list_contains(ch_list, c) then
       return false
     end
   end
@@ -707,7 +714,7 @@ function M.dedup(T, key)
 
   local NT = {}
   local names = {} ---@type any[]
-  for _, v in pairs(T) do
+  for k, v in pairs(T) do
     local not_dup = false
     if M.is_type('table', v) then
       if not key then
@@ -715,16 +722,20 @@ function M.dedup(T, key)
           return vim.deep_equal(val, v)
         end, { predicate = true })
       else
-        not_dup = not vim.list_contains(names, v[key])
+        not_dup = not vim.tbl_contains(names, function(val)
+          return vim.deep_equal(val, v[key])
+        end, { predicate = true })
         if not_dup then
           table.insert(names, v[key])
         end
       end
     else
-      not_dup = not vim.list_contains(NT, v)
+      not_dup = not vim.tbl_contains(NT, function(val)
+        return vim.deep_equal(val, v)
+      end, { predicate = true })
     end
     if not_dup then
-      table.insert(NT, v)
+      NT[k] = v
     end
   end
   return NT
@@ -749,10 +760,9 @@ function M.format_per_type(t, data, sep, constraints)
 
   if t == 'string' then
     local res = ('%s`"%s"`'):format(sep, data)
-    if not M.is_type('table', constraints) then
-      return res
-    end
-    if constraints and vim.list_contains(constraints, data) then
+    if
+      not M.is_type('table', constraints) or constraints and vim.list_contains(constraints, data)
+    then
       return res
     end
     return res, true

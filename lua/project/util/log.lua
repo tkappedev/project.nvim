@@ -11,11 +11,11 @@ local Util = require('project.util')
 local Config = require('project.config')
 local Path = require('project.util.path')
 
+local timer = nil ---@type uv.uv_timer_t|nil
+
 ---@class Project.Log
 ---@field public logfile? string
 ---@field public window? Project.LogWin
----@field private timer uv.uv_timer_t|nil
----@field public has_watch_setup? boolean
 local M = {}
 
 ---@param lvl vim.log.levels
@@ -74,10 +74,64 @@ function M.clear_log()
   end
 end
 
+local function timer_cb()
+  local stat = uv.fs_stat(M.logfile)
+  if not stat or stat.size < math.floor(Config.options.log.max_size * 1024 * 1024) then
+    return
+  end
+
+  local fd = uv.fs_open(M.logfile, 'w', Path.open_mode('644'))
+  if not fd then
+    return
+  end
+
+  local ok = uv.fs_ftruncate(fd, 0)
+  uv.fs_close(fd)
+
+  if ok then
+    vim.notify(
+      ('(%s): `%s` has been cleared!'):format(MODSTR, Util.strip_slash(M.logfile, ':p:~')),
+      INFO
+    )
+    return
+  end
+
+  vim.notify(
+    ('(%s): `%s` could not be cleared!'):format(MODSTR, Util.strip_slash(M.logfile, ':p:~')),
+    ERROR
+  )
+end
+
+local function make_timer()
+  if timer and timer:is_active() then
+    return
+  end
+
+  timer = uv.new_timer()
+  if not timer then
+    return
+  end
+
+  timer:start(10000, 900000, vim.schedule_wrap(timer_cb))
+
+  local group = vim.api.nvim_create_augroup('project.nvim.log', { clear = false })
+  vim.api.nvim_create_autocmd({ 'VimLeavePre' }, {
+    group = group,
+    callback = function()
+      if not (timer and timer:is_active()) then
+        return
+      end
+
+      timer:stop()
+      timer = nil
+    end,
+  })
+end
+
 ---Only runs once.
 --- ---
-function M.setup_watch()
-  if M.has_watch_setup then
+local function setup_watch()
+  if vim.g.project_log_has_watch_setup == 1 then
     return
   end
   local event = uv.new_fs_event()
@@ -92,52 +146,8 @@ function M.setup_watch()
     M.read_log()
   end)
 
-  M.has_watch_setup = true
-
-  M.make_timer()
-end
-
-function M.timer_cb()
-  local stat = uv.fs_stat(M.logfile)
-  if not stat or stat.size < math.floor(Config.options.log.max_size * 1024 * 1024) then
-    return
-  end
-
-  local fd = uv.fs_open(M.logfile, 'w', Path.open_mode('644'))
-  if not fd then
-    return
-  end
-
-  uv.fs_ftruncate(fd, 0)
-  uv.fs_close(fd)
-
-  vim.notify(('(%s): `%s` has been cleared!'):format(MODSTR, M.logfile), vim.log.levels.INFO)
-end
-
-function M.make_timer()
-  if M.timer and M.timer:is_active() then
-    return
-  end
-
-  M.timer = uv.new_timer()
-  if not M.timer then
-    return
-  end
-
-  M.timer:start(10000, 900000, vim.schedule_wrap(M.timer_cb))
-
-  local group = vim.api.nvim_create_augroup('project.nvim.log', { clear = false })
-  vim.api.nvim_create_autocmd({ 'VimLeavePre' }, {
-    group = group,
-    callback = function()
-      if not (M.timer and M.timer:is_active()) then
-        return
-      end
-
-      M.timer:stop()
-      M.timer = nil
-    end,
-  })
+  make_timer()
+  vim.g.project_log_has_watch_setup = 1
 end
 
 ---@param data string
@@ -265,7 +275,7 @@ function M.setup()
       .. os.date(('%s    %s    %s\n'):format(head, '%x  (%H:%M:%S)', head))
   )
 
-  M.setup_watch()
+  setup_watch()
   M.create_commands()
 end
 

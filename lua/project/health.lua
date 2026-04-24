@@ -142,7 +142,7 @@ function M.project_check()
   vim.health.info(msg)
 
   vim.health.start('Active Sessions')
-  local active = History.has_watch_setup
+  local active = vim.g.project_history_has_watch_setup == 1
   local projects = vim.deepcopy(History.session_projects)
   if not active or vim.tbl_isempty(projects) then
     vim.health.warn('No active session projects!')
@@ -172,9 +172,10 @@ function M.logging_check()
   vim.health.ok('Logging enabled!')
   if not (vim.cmd.ProjectLog and vim.is_callable(vim.cmd.ProjectLog)) then
     vim.health.warn('`:ProjectLog` user command is not loaded!')
-  else
-    vim.health.ok('`:ProjectLog` user command loaded!')
+    return
   end
+
+  vim.health.ok('`:ProjectLog` user command loaded!')
 end
 
 function M.fzf_lua_check()
@@ -189,9 +190,10 @@ function M.fzf_lua_check()
   vim.health.ok('`fzf-lua` integration enabled!')
   if not (vim.cmd.ProjectFzf and vim.is_callable(vim.cmd.ProjectFzf)) then
     vim.health.warn('`:ProjectFzf` user command is not loaded!')
-  else
-    vim.health.ok('`:ProjectFzf` user command loaded!')
+    return
   end
+
+  vim.health.ok('`:ProjectFzf` user command loaded!')
 end
 
 function M.recent_proj_check()

@@ -10,12 +10,11 @@ local Path = require('project.util.path')
 local Log = require('project.util.log')
 
 ---@class Project.Util.History
----@field public has_watch_setup? boolean
 ---@field public historysize? integer
 ---@field public legacy? boolean
 ---Projects from previous neovim sessions.
 --- ---
----@field public recent_projects? string[]|ProjectHistoryEntry[]
+---@field public recent_projects string[]|ProjectHistoryEntry[]
 ---Projects from current neovim session.
 --- ---
 ---@field public session_projects string[]|ProjectHistoryEntry[]
@@ -23,6 +22,7 @@ local Log = require('project.util.log')
 local M = {}
 
 M.session_projects = {}
+M.recent_projects = {}
 
 function M.migrate()
   if not M.legacy then
@@ -32,7 +32,7 @@ function M.migrate()
 
   M.read_history()
 
-  if M.recent_projects and Util.same_type_list(M.recent_projects, 'string') then
+  if Util.same_type_list(M.recent_projects, 'string') then
     for i, v in ipairs(M.recent_projects) do
       M.recent_projects[i] = {
         path = v,
@@ -152,7 +152,7 @@ function M.clear_historyfile(force)
     end
   end
 
-  local fd = Path.open_file(Path.historyfile, 'w', Path.open_mode('644'))
+  local fd = Path.open_file(Path.historyfile, 'w')
   if not fd then
     Log.error(('(%s.clear_historyfile): Unable to clear history file!'):format(MODSTR))
     vim.notify('(project.nvim): Unable to clear history file!', ERROR)
@@ -509,8 +509,8 @@ end
 
 ---Only runs once.
 --- ---
-function M.setup_watch()
-  if M.has_watch_setup then
+local function setup_watch()
+  if vim.g.project_history_has_watch_setup == 1 then
     return
   end
 
@@ -525,7 +525,7 @@ function M.setup_watch()
     M.recent_projects = nil
     M.read_history()
   end)
-  M.has_watch_setup = true
+  vim.g.project_history_has_watch_setup = 1
 end
 
 function M.read_history()
@@ -542,7 +542,7 @@ function M.read_history()
     return
   end
 
-  M.setup_watch()
+  setup_watch()
   if stat.size == 0 and not vim.tbl_isempty(M.session_projects) then
     vim.defer_fn(M.write_history, 10000)
     return

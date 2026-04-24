@@ -248,8 +248,7 @@ function M.prompt_project(input)
   end
 
   local Core = require('project.core')
-  local session = History.session_projects
-  if Core.current_project == input or vim.list_contains(session, input) then
+  if Core.current_project == input or vim.list_contains(History.session_projects, input) then
     vim.notify('Already added that directory!', WARN)
     return
   end
@@ -448,7 +447,7 @@ M.recents_menu = M.select.new({
     return choices_list
   end,
   choices = function()
-    local choices = {} ---@type table<string, fun()|fun(proj: string, only_cd: boolean, ran_cd: boolean)>
+    local choices = {} ---@type table<string, fun(proj: string, only_cd: boolean, ran_cd: boolean)>
     for _, s in ipairs(M.recents_menu.choices_list()) do
       choices[s] = s ~= 'Exit' and open_node or function() end
     end
@@ -507,6 +506,11 @@ M.open_menu = M.select.new({
         vim.cmd.ProjectPicker()
       end
     end
+    if vim.g.project_snacks_loaded == 1 and vim.cmd.ProjectSnacks then
+      res.Snacks = function()
+        vim.cmd.ProjectSnacks()
+      end
+    end
     if vim.g.project_telescope_loaded == 1 then
       res.Telescope = require('telescope._extensions.projects').projects
     end
@@ -538,7 +542,10 @@ M.open_menu = M.select.new({
       'Import',
       'Help',
     }
-    if vim.g.project_picker_loaded == 1 then
+    if vim.g.project_snacks_loaded == 1 and vim.cmd.ProjectSnacks then
+      table.insert(res_list, #res_list - 5, 'Snacks')
+    end
+    if vim.g.project_picker_loaded == 1 and vim.cmd.ProjectPicker then
       table.insert(res_list, #res_list - 5, 'Picker')
     end
     if vim.g.project_telescope_loaded == 1 then
