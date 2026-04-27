@@ -454,6 +454,84 @@ function M.on_buf_enter(bufnr)
   History.write_history()
 end
 
+---@param scan_what? 'visible_files'|'visible_directories'|'all_visible'|'all_files'|'all_directories'|'all'|'hidden_files'|'hidden_directories'|'all_hidden'
+---@param path? string
+---@return string[]|nil files_list
+function M.root_files(scan_what, path)
+  if vim.g.project_setup ~= 1 then
+    return
+  end
+  Util.validate({
+    scan_what = { scan_what, { 'string', 'nil' }, true },
+    path = { path, { 'string', 'nil' }, true },
+  })
+  if not scan_what then
+    scan_what = Config.options.show_hidden and 'all' or 'all_visible'
+  end
+  if not path or path == '' then
+    path = M.get_current_project() or M.get_project_root()
+    if not path then
+      return
+    end
+  end
+
+  if
+    not vim.list_contains({
+      'all',
+      'all_directories',
+      'all_files',
+      'all_hidden',
+      'all_visible',
+      'hidden_directories',
+      'hidden_files',
+      'visible_directories',
+      'visible_files',
+    }, scan_what)
+  then
+    error(('(%s.root_files): Invalid parameter `%s`!'):format(MODSTR, scan_what), ERROR)
+  end
+  if not Path.exists(path) or vim.fn.isdirectory(path) ~= 1 then
+    error(('(%s.root_files): Invalid path `%s`!'):format(MODSTR, path), ERROR)
+  end
+
+  local dir = uv.fs_scandir(path)
+  if not dir then
+    return
+  end
+
+  local files = {} ---@type string[]
+  local next, ftype = uv.fs_scandir_next(dir)
+  while next ~= nil do
+    local is_hidden = next:match('^[%._].*$') ~= nil ---@type boolean
+    local is_type ---@type boolean
+    if scan_what == 'all_files' then
+      is_type = ftype == 'file'
+    elseif scan_what == 'visible_files' then
+      is_type = ftype == 'file' and not is_hidden
+    elseif scan_what == 'hidden_files' then
+      is_type = ftype == 'file' and is_hidden
+    elseif scan_what == 'all_directories' then
+      is_type = ftype == 'directory'
+    elseif scan_what == 'visible_directories' then
+      is_type = ftype == 'directory' and not is_hidden
+    elseif scan_what == 'hidden_directories' then
+      is_type = ftype == 'directory' and is_hidden
+    elseif scan_what == 'all_visible' then
+      is_type = vim.list_contains({ 'file', 'directory' }, ftype) and not is_hidden
+    elseif scan_what == 'all_hidden' then
+      is_type = vim.list_contains({ 'file', 'directory' }, ftype) and is_hidden
+    elseif scan_what == 'all' then
+      is_type = vim.list_contains({ 'file', 'directory' }, ftype)
+    end
+    if is_type then
+      table.insert(files, next)
+    end
+    next, ftype = uv.fs_scandir_next(dir)
+  end
+
+  return vim.tbl_isempty(files) and nil or files
+end
+
 function M.setup()
   local group = vim.api.nvim_create_augroup('project.nvim', { clear = true })
   vim.api.nvim_create_autocmd('VimLeavePre', {

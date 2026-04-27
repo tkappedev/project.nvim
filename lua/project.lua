@@ -21,6 +21,7 @@ M.get_project_root = Core.get_project_root
 M.get_recent_projects = History.get_recent_projects
 M.open_menu = Popup.open_menu
 M.recents_menu = Popup.recents_menu
+M.root_files = Core.root_files
 M.run_fzf_lua = require('project.extensions.fzf-lua').run_fzf_lua
 M.session_menu = Popup.session_menu
 M.setup = Config.setup
