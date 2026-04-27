@@ -19,16 +19,10 @@ local function complete_items(_, line)
     return {}
   end
 
-  local recents = Util.reverse(History.get_recent_projects(true, true))
-  for k = 2, #args, 1 do
-    local j = 1
-    while j <= #recents do
-      if recents[j] == args[k] then
-        table.remove(recents, j)
-        break
-      end
-
-      j = j + 1
+  local recents = {} ---@type ProjectHistoryEntry[]|string[]
+  for _, v in ipairs(Util.reverse(History.get_recent_projects(true, true))) do
+    if not vim.list_contains(args, v) then
+      table.insert(recents, v)
     end
   end
 
@@ -171,9 +165,13 @@ function M.create_user_commands()
           if Util.dir_exists(input) then
             if
               Core.current_project ~= input
-              and not vim.tbl_contains(session, function(val)
-                return vim.deep_equal(val, input)
-              end, { predicate = true })
+              and not vim.tbl_contains(
+                session,
+                function(val) ---@param val string|ProjectHistoryEntry
+                  return (History.legacy and val or val.path) == input
+                end,
+                { predicate = true }
+              )
             then
               Core.set_pwd(input, 'command')
               History.write_history()
@@ -213,34 +211,44 @@ function M.create_user_commands()
           return
         end
 
-        local recent = History.get_recent_projects(true)
+        local recent = History.get_recent_projects()
         if not recent then
           Log.error('(:ProjectDelete): No recent projects!')
           vim.notify('(:ProjectDelete): No recent projects!', ERROR)
           return
         end
 
-        local msg
         for _, v in ipairs(ctx.fargs) do
-          v = Util.strip({ '"', "'" }, v)
           local path = Util.strip_slash(v)
           if
             not (
               ctx.bang
-              or not vim.tbl_contains(recent, function(val)
-                return vim.deep_equal(val, path)
+              or vim.tbl_contains(recent, function(val) ---@param val string|ProjectHistoryEntry
+                Log.debug(
+                  ('`%s` =? `%s` ==> %s'):format(
+                    path,
+                    History.legacy and val or val.path,
+                    vim.inspect((History.legacy and val or val.path) == path)
+                  )
+                )
+                return (History.legacy and val or val.path) == path
               end, { predicate = true })
-              or path ~= ''
-            )
+            ) or path == ''
           then
-            msg = ('(:ProjectDelete): Could not delete `%s`, aborting'):format(path)
-            Log.error(msg)
-            vim.notify(msg, ERROR)
+            Log.error(('(:ProjectDelete): Could not delete `%s`, aborting'):format(path))
+            vim.notify(('(:ProjectDelete): Could not delete `%s`, aborting'):format(path), ERROR)
             return
           end
           if
-            vim.tbl_contains(recent, function(val)
-              return vim.deep_equal(val, path)
+            vim.tbl_contains(recent, function(val) ---@param val string|ProjectHistoryEntry
+              Log.debug(
+                ('`%s` =? `%s` ==> %s'):format(
+                  path,
+                  History.legacy and val or val.path,
+                  vim.inspect((History.legacy and val or val.path) == path)
+                )
+              )
+              return (History.legacy and val or val.path) == path
             end, { predicate = true })
           then
             History.delete_project(path)
@@ -262,7 +270,15 @@ function M.create_user_commands()
         -- Thanks to @TheLeoP for the advice!
         -- https://www.reddit.com/r/neovim/comments/1pvl1tb/comment/nvwzvvu/
         if #args == 2 then
-          return vim.fn.getcompletion(args[2], 'file', true)
+          local completions = vim.fn.getcompletion(args[2], 'file', true)
+          local items = {} ---@type string[]
+          for _, v in ipairs(completions) do
+            if vim.startswith(v, args[2]) then
+              table.insert(items, v)
+            end
+          end
+
+          return vim.tbl_isempty(items) and completions or items
         end
 
         if #args == 3 then
