@@ -502,7 +502,7 @@ function M.root_files(scan_what, path)
   local files = {} ---@type string[]
   local next, ftype = uv.fs_scandir_next(dir)
   while next ~= nil do
-    local is_hidden = next:match('^[%._].*$') ~= nil ---@type boolean
+    local is_hidden = Path.is_hidden(next)
     local is_type ---@type boolean
     if scan_what == 'all_files' then
       is_type = ftype == 'file'

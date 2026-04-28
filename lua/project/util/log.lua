@@ -255,7 +255,7 @@ function M.setup()
     return
   end
   M.logpath = log_cfg.logpath
-  M.logfile = M.logpath .. '/project.log'
+  M.logfile = vim.fs.joinpath(M.logpath, 'project.log')
   Path.create_path(M.logpath)
 
   local fd

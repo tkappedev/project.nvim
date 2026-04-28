@@ -24,7 +24,10 @@ function M.strip_slash(path, mods)
     mods = { mods, { 'string', 'nil' }, true },
   })
 
-  return M.rstrip('/', vim.fn.fnamemodify(path, (mods and mods ~= '') and mods or ':p'))
+  return M.rstrip(
+    M.is_windows() and '\\' or '/',
+    vim.fn.fnamemodify(path, (mods and mods ~= '') and mods or ':p')
+  )
 end
 
 ---@param s string
@@ -497,29 +500,14 @@ function M.range(x, y, step)
 end
 
 ---Attempt to find out if given path is a hidden file.
----**Works only Windows, currently!**
 --- ---
 ---@param path string
----@return boolean hidden
----@nodiscard
+---@noiuscard
 function M.is_hidden(path)
   M.validate({ path = { path, { 'string' } } })
 
-  ---CREDITS: [u/Some_Derpy_Pineapple](https://www.reddit.com/r/neovim/comments/1nu5ehj/comment/ngyz21m/)
-  local FILE_ATTRIBUTE_HIDDEN = 0x2
-  local ffi = nil ---@type ffilib
-  if M.mod_exists('ffi') then
-    ffi = require('ffi')
-    ffi.cdef([[
-      int GetFileAttributesA(const char *path);
-    ]])
-  end
-
-  if M.is_windows() and ffi then
-    return bit.band(ffi.C.GetFileAttributesA(path), FILE_ATTRIBUTE_HIDDEN) ~= 0
-  end
-
-  return false --- TODO: Find a reliable method for UNIX systems
+  local components = vim.split(path, M.is_windows() and '\\' or '/', { trimempty = false })
+  return components[#components]:match('^' .. (M.is_windows() and '_' or '%.') .. '.*$') ~= nil
 end
 
 ---@param exe string[]|string

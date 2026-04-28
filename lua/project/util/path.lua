@@ -21,6 +21,7 @@ local M = {}
 M.last_dir_cache = ''
 M.curr_dir_cache = {}
 M.exists = Util.path_exists
+M.is_hidden = Util.is_hidden
 
 ---@param mode string
 ---@return integer|nil mode_num

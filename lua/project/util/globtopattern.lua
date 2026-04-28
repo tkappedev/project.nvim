@@ -199,7 +199,11 @@ function M.pattern_exclude(pattern)
   Util.validate({ pattern = { pattern, { 'string' } } })
 
   if vim.startswith(pattern, '~/') then
-    pattern = ('%s/%s'):format(vim.fn.expand('~'), pattern:sub(3, pattern:len()))
+    pattern = ('%s%s%s'):format(
+      vim.fn.expand('~'),
+      Util.is_windows() and '\\' or '/',
+      pattern:sub(3, pattern:len())
+    )
   end
   return M.globtopattern(pattern)
 end

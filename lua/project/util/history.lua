@@ -78,10 +78,12 @@ function M.rename_project(project, name)
   project = Util.strip_slash(project)
   name = Util.strip(' ', name)
 
-  local valid_chars = vim.split(
-    [[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@!_-?=+.,:;<>{}[]()'"^%$#&*`~| ]],
-    '',
-    { trimempty = false }
+  local valid_chars = Util.dedup(
+    vim.split(
+      [[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@!_-?=+.,:;<>{}[]()'"^%$#&*`~| ]],
+      '',
+      { trimempty = false }
+    )
   )
   for _, c in ipairs(vim.split(name, '', { trimempty = false })) do
     if not vim.list_contains(valid_chars, c) then

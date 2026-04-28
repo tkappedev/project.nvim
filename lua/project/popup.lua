@@ -8,41 +8,7 @@ local Config = require('project.config')
 local History = require('project.util.history')
 local Util = require('project.util')
 local Path = require('project.util.path')
-
----@param path string
----@param hidden boolean
----@return boolean available
----@nodiscard
-local function hidden_avail(path, hidden)
-  Util.validate({
-    path = { path, { 'string' } },
-    hidden = { hidden, { 'boolean' } },
-  })
-
-  local fd = Util.executable('fd') and 'fd' or (Util.executable('fdfind') and 'fdfind' or '')
-  if fd == '' then
-    error(('(%s.hidden_avail): `fd`/`fdfind` not found in found PATH!'):format(MODSTR), ERROR)
-  end
-
-  local cmd = { fd, '-Iad1' }
-  if hidden then
-    table.insert(cmd, '-H')
-  end
-
-  local out = vim.system(cmd, { text = true, cwd = vim.g.project_nvim_cwd }):wait(10000).stdout
-  if not out then
-    return false
-  end
-
-  local ret = false
-  local nodes = vim.split(out, '\n', { plain = true, trimempty = true })
-  vim.tbl_map(function(value)
-    if value == path or vim.startswith(value, path) then
-      ret = true
-    end
-  end, nodes)
-  return ret
-end
+local Core = require('project.core')
 
 ---@param proj string
 ---@param only_cd boolean
@@ -55,7 +21,7 @@ local function open_node(proj, only_cd, ran_cd)
   })
 
   if not ran_cd then
-    if not require('project.core').set_pwd(proj, 'prompt') then
+    if not Core.set_pwd(proj, 'prompt') then
       vim.notfy('(open_node): Unsucessful `set_pwd`!', ERROR)
       return
     end
@@ -72,21 +38,7 @@ local function open_node(proj, only_cd, ran_cd)
     return
   end
 
-  local hidden = require('project.config').options.show_hidden
-  local ls = {}
-  while true do
-    local node = uv.fs_scandir_next(dir)
-    if not node then
-      break
-    end
-    node = Path.join(proj, node)
-    if uv.fs_stat(node) then
-      local hid = Util.is_hidden(node)
-      if (hidden and hid) or hidden_avail(node, hidden) then
-        table.insert(ls, node)
-      end
-    end
-  end
+  local ls = Core.root_files(Config.options.show_hidden and 'all' or 'all_visible', proj)
   table.insert(ls, 'Exit')
 
   vim.ui.select(ls, {
@@ -97,7 +49,8 @@ local function open_node(proj, only_cd, ran_cd)
       end
 
       item = Util.strip_slash(item, ':p:~')
-      return Util.strip_slash(item, ':p:~') .. (vim.fn.isdirectory(item) == 1 and '/' or '')
+      return Util.strip_slash(item, ':p:~')
+        .. (vim.fn.isdirectory(item) == 1 and (Util.is_windows() and '\\' or '/') or '')
     end,
   }, function(item) ---@param item string
     if not item or vim.list_contains({ '', 'Exit' }, item) then
@@ -247,7 +200,6 @@ function M.prompt_project(input)
     end
   end
 
-  local Core = require('project.core')
   if Core.current_project == input or vim.list_contains(History.session_projects, input) then
     vim.notify('Already added that directory!', WARN)
     return
@@ -406,7 +358,7 @@ M.recents_menu = M.select.new({
           return item
         end
 
-        local curr = require('project.core').current_project or ''
+        local curr = Core.current_project or ''
         local entry = History.find_entry('recent', item, 'path')
         return (entry == curr and '* ' or '') .. item
       end,

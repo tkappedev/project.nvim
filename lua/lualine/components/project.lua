@@ -2,6 +2,7 @@ local in_list = vim.list_contains
 local Highlight = require('lualine.highlight')
 local Config = require('project.config')
 local Util = require('project.util')
+local Log = require('project.util.log')
 
 ---@class LuaLine.Super
 ---@field private _reset_components function
@@ -69,9 +70,7 @@ function M:init(options)
   )
 
   if vim.g.project_lualine_logged ~= 1 then
-    require('project.util.log').debug(
-      '(lualine.components.project:init): lualine.nvim integration enabled.'
-    )
+    Log.debug('(lualine.components.project:init): lualine.nvim integration enabled.')
     vim.g.project_lualine_logged = 1
   end
 end
