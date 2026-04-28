@@ -456,14 +456,16 @@ end
 
 ---@param scan_what? 'visible_files'|'visible_directories'|'all_visible'|'all_files'|'all_directories'|'all'|'hidden_files'|'hidden_directories'|'all_hidden'
 ---@param path? string
+---@param prefix? string
 ---@return string[]|nil files_list
-function M.root_files(scan_what, path)
+function M.root_files(scan_what, path, prefix)
   if vim.g.project_setup ~= 1 then
     return
   end
   Util.validate({
     scan_what = { scan_what, { 'string', 'nil' }, true },
     path = { path, { 'string', 'nil' }, true },
+    prefix = { prefix, { 'string', 'nil' }, true },
   })
   if not scan_what then
     scan_what = Config.options.show_hidden and 'all' or 'all_visible'
@@ -524,7 +526,7 @@ function M.root_files(scan_what, path)
       is_type = vim.list_contains({ 'file', 'directory' }, ftype)
     end
     if is_type then
-      table.insert(files, next)
+      table.insert(files, prefix and vim.fs.joinpath(prefix, next) or next)
     end
     next, ftype = uv.fs_scandir_next(dir)
   end

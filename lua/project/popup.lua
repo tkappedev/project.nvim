@@ -13,12 +13,14 @@ local Core = require('project.core')
 ---@param proj string
 ---@param only_cd boolean
 ---@param ran_cd boolean
-local function open_node(proj, only_cd, ran_cd)
+function open_node(proj, only_cd, ran_cd)
   Util.validate({
     proj = { proj, { 'string' } },
     only_cd = { only_cd, { 'boolean' } },
     ran_cd = { ran_cd, { 'boolean' } },
   })
+
+  proj = Util.strip_slash(proj)
 
   if not ran_cd then
     if not Core.set_pwd(proj, 'prompt') then
@@ -32,13 +34,18 @@ local function open_node(proj, only_cd, ran_cd)
     vim.g.project_nvim_cwd = proj
   end
 
+  vim.print(proj)
   local dir = uv.fs_scandir(proj)
   if not dir then
     vim.notify(('(%s.open_node): NO DIR `%s`!'):format(MODSTR, proj), ERROR)
     return
   end
 
-  local ls = Core.root_files(Config.options.show_hidden and 'all' or 'all_visible', proj)
+  local ls = Core.root_files(
+    Config.options.show_hidden and 'all' or 'all_visible',
+    proj,
+    ran_cd and proj or nil
+  )
   table.insert(ls, 'Exit')
 
   vim.ui.select(ls, {
@@ -53,6 +60,7 @@ local function open_node(proj, only_cd, ran_cd)
         .. (vim.fn.isdirectory(item) == 1 and (Util.is_windows() and '\\' or '/') or '')
     end,
   }, function(item) ---@param item string
+    vim.print(('`%s`'):format(Util.strip_slash(item, ':p:~')))
     if not item or vim.list_contains({ '', 'Exit' }, item) then
       return
     end
