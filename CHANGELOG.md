@@ -1,5 +1,13 @@
 # Changelog
 
+## [v3.3.0-1](https://github.com/DrKJeff16/project.nvim/tree/v3.3.0-1) (2026-04-28)
+
+[Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v3.2.2-1...v3.3.0-1)
+
+**Fixed bugs:**
+
+- \[BUG\]: nil `recent_projects` in `find_entry()` triggers errors [\#60](https://github.com/DrKJeff16/project.nvim/issues/60)
+
 ## [v3.2.2-1](https://github.com/DrKJeff16/project.nvim/tree/v3.2.2-1) (2026-04-24)
 
 [Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v3.2.1-1...v3.2.2-1)
@@ -32,10 +40,6 @@
 ## [v3.0.0-1](https://github.com/DrKJeff16/project.nvim/tree/v3.0.0-1) (2026-04-14)
 
 [Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/v2.0.0-1...v3.0.0-1)
-
-**Implemented enhancements:**
-
-- refactor!: allow projects to be named [\#57](https://github.com/DrKJeff16/project.nvim/pull/57) ([DrKJeff16](https://github.com/DrKJeff16))
 
 ## [v2.0.0-1](https://github.com/DrKJeff16/project.nvim/tree/v2.0.0-1) (2026-03-15)
 
@@ -447,10 +451,6 @@
 ## [v0.0.2](https://github.com/DrKJeff16/project.nvim/tree/v0.0.2) (2025-08-09)
 
 [Full Changelog](https://github.com/DrKJeff16/project.nvim/compare/e0bbd8da7fa4026e6e1e39a53918356e89fd50dd...v0.0.2)
-
-**Implemented enhancements:**
-
-- chore: `.github/ISSUE_TEMPLATE/` maintenance. [\#2](https://github.com/DrKJeff16/project.nvim/pull/2) ([DrKJeff16](https://github.com/DrKJeff16))
 
 
 
