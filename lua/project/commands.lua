@@ -385,16 +385,6 @@ function M.create_user_commands()
         end
 
         if #ctx.fargs == 1 then
-          if
-            not vim.list_contains(
-              { Util.strip_slash(ctx.fargs[1]), Util.strip_slash(ctx.fargs[1], ':p:~') },
-              ctx.fargs[1]
-            )
-          then
-            vim.notify('(:ProjectHistory rename): Invalid directory!', ERROR)
-            return
-          end
-
           Popup.rename_menu()
           return
         end
@@ -429,7 +419,6 @@ function M.create_user_commands()
           Popup.gen_import_prompt()
           return
         end
-        vim.print(ctx.fargs)
 
         History.import_history_json(ctx.fargs[1], ctx.bang)
       end,

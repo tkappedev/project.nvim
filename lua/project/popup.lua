@@ -13,7 +13,7 @@ local Core = require('project.core')
 ---@param proj string
 ---@param only_cd boolean
 ---@param ran_cd boolean
-function open_node(proj, only_cd, ran_cd)
+local function open_node(proj, only_cd, ran_cd)
   Util.validate({
     proj = { proj, { 'string' } },
     only_cd = { only_cd, { 'boolean' } },
@@ -34,7 +34,6 @@ function open_node(proj, only_cd, ran_cd)
     vim.g.project_nvim_cwd = proj
   end
 
-  vim.print(proj)
   local dir = uv.fs_scandir(proj)
   if not dir then
     vim.notify(('(%s.open_node): NO DIR `%s`!'):format(MODSTR, proj), ERROR)
@@ -60,7 +59,6 @@ function open_node(proj, only_cd, ran_cd)
         .. (vim.fn.isdirectory(item) == 1 and (Util.is_windows() and '\\' or '/') or '')
     end,
   }, function(item) ---@param item string
-    vim.print(('`%s`'):format(Util.strip_slash(item, ':p:~')))
     if not item or vim.list_contains({ '', 'Exit' }, item) then
       return
     end
