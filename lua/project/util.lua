@@ -700,8 +700,8 @@ function M.dedup(T, key)
     return T
   end
 
-  local NT = {}
-  local names = {} ---@type any[]
+  local list = vim.islist(T)
+  local names, NT = {}, {}
   for k, v in pairs(T) do
     local not_dup = false
     if M.is_type('table', v) then
@@ -723,9 +723,14 @@ function M.dedup(T, key)
       end, { predicate = true })
     end
     if not_dup then
-      NT[k] = v
+      if list then
+        table.insert(NT, v)
+      else
+        NT[k] = v
+      end
     end
   end
+
   return NT
 end
 
