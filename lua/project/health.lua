@@ -2,12 +2,12 @@
 
 local MODSTR = 'project.health'
 local uv = vim.uv or vim.loop
-local Util = require('project.util')
 local Config = require('project.config')
-local Path = require('project.util.path')
+local Core = require('project.core')
 local History = require('project.util.history')
 local Log = require('project.util.log')
-local Core = require('project.core')
+local Path = require('project.util.path')
+local Util = require('project.util')
 
 ---@class Project.Health
 local M = {}
