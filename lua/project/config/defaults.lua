@@ -133,10 +133,7 @@ function DEFAULTS:verify_history()
   end
 
   if self.historysize and Util.is_int(self.historysize, self.historysize >= 0) then
-    vim.notify(
-      ('`options.historysize` is deprecated, use `options.history.size`!'):format(MODSTR),
-      WARN
-    )
+    vim.notify(('`options.historysize` is deprecated, use `options.history.size`!'):format(MODSTR), WARN)
     self.history.size = self.historysize
     self.historysize = nil ---@diagnostic disable-line:inject-field
   end
@@ -154,10 +151,7 @@ function DEFAULTS:verify_scope_chdir()
     return
   end
 
-  vim.notify(
-    ('`scope_chdir` option invalid (`%s`). Reverting to default option.'):format(self.scope_chdir),
-    WARN
-  )
+  vim.notify(('`scope_chdir` option invalid (`%s`). Reverting to default option.'):format(self.scope_chdir), WARN)
   self.scope_chdir = DEFAULTS.scope_chdir
 end
 
@@ -168,10 +162,7 @@ function DEFAULTS:verify_datapath()
   Util.validate({ ['history.save_dir'] = { self.history.save_dir, { 'string', 'nil' }, true } })
 
   if self.datapath and Util.is_type('string', self.datapath) then
-    vim.notify(
-      ('`options.datapath` is deprecated, use `options.history.save_dir`!'):format(MODSTR),
-      WARN
-    )
+    vim.notify(('`options.datapath` is deprecated, use `options.history.save_dir`!'):format(MODSTR), WARN)
     self.history.save_dir = self.datapath
     self.datapath = nil ---@diagnostic disable-line:inject-field
   end
@@ -242,10 +233,7 @@ function DEFAULTS:verify_lsp()
     self.use_lsp = nil ---@diagnostic disable-line:inject-field
   end
   if self.allow_patterns_for_lsp ~= nil then
-    vim.notify(
-      '`allow_patterns_for_lsp` is deprecated! Use `lsp.use_pattern_matching` instead.',
-      WARN
-    )
+    vim.notify('`allow_patterns_for_lsp` is deprecated! Use `lsp.use_pattern_matching` instead.', WARN)
     self.lsp.use_pattern_matching = self.allow_patterns_for_lsp
     self.allow_patterns_for_lsp = nil ---@diagnostic disable-line:inject-field
   end
@@ -259,10 +247,7 @@ end
 function DEFAULTS:verify_owners()
   self.different_owners = self.different_owners or {}
   if self.allow_different_owners ~= nil and type(self.allow_different_owners) == 'boolean' then
-    vim.notify(
-      '`allow_different_owners` is deprecated! Use `different_owners.allow` instead.',
-      WARN
-    )
+    vim.notify('`allow_different_owners` is deprecated! Use `different_owners.allow` instead.', WARN)
     self.different_owners.allow = self.allow_different_owners
     self.allow_different_owners = nil ---@diagnostic disable-line:inject-field
   end
@@ -392,19 +377,15 @@ function DEFAULTS:verify()
     return
   end
 
-  vim.notify(
-    '(project.nvim): `detection_methods` has been deprecated!\nUse `lsp.enabled` instead.',
-    WARN
-  )
+  vim.notify('(project.nvim): `detection_methods` has been deprecated!\nUse `lsp.enabled` instead.', WARN)
 end
 
 function DEFAULTS.new(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  local obj =
-    setmetatable(vim.tbl_deep_extend('keep', opts or {}, DEFAULTS), { --[[@as ProjectDefaults]]
-      __index = DEFAULTS,
-    })
+  local obj = setmetatable(vim.tbl_deep_extend('keep', opts or {}, DEFAULTS), { --[[@as ProjectDefaults]]
+    __index = DEFAULTS,
+  })
   return obj
 end
 

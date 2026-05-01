@@ -76,9 +76,7 @@ end
 ---@nodiscard
 function M.get_config()
   if vim.g.project_setup ~= 1 then
-    require('project.util.log').error(
-      ('(%s.get_config): `project.nvim` is not set up!'):format(MODSTR)
-    )
+    require('project.util.log').error(('(%s.get_config): `project.nvim` is not set up!'):format(MODSTR))
     error(('(%s.get_config): `project.nvim` is not set up!'):format(MODSTR), ERROR)
   end
   local exceptions = {

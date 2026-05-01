@@ -89,17 +89,11 @@ local function timer_cb()
   uv.fs_close(fd)
 
   if ok then
-    vim.notify(
-      ('(%s): `%s` has been cleared!'):format(MODSTR, Util.strip_slash(M.logfile, ':p:~')),
-      INFO
-    )
+    vim.notify(('(%s): `%s` has been cleared!'):format(MODSTR, Util.strip_slash(M.logfile, ':p:~')), INFO)
     return
   end
 
-  vim.notify(
-    ('(%s): `%s` could not be cleared!'):format(MODSTR, Util.strip_slash(M.logfile, ':p:~')),
-    ERROR
-  )
+  vim.notify(('(%s): `%s` could not be cleared!'):format(MODSTR, Util.strip_slash(M.logfile, ':p:~')), ERROR)
 end
 
 local function make_timer()
@@ -269,11 +263,7 @@ function M.setup()
 
   fd = M.open('a')
   local head = ('='):rep(45)
-  uv.fs_write(
-    fd,
-    (stat.size >= 1 and '\n' or '')
-      .. os.date(('%s    %s    %s\n'):format(head, '%x  (%H:%M:%S)', head))
-  )
+  uv.fs_write(fd, (stat.size >= 1 and '\n' or '') .. os.date(('%s    %s    %s\n'):format(head, '%x  (%H:%M:%S)', head)))
 
   setup_watch()
   M.create_commands()
@@ -317,13 +307,7 @@ function M.open_win()
     local win = vim.api.nvim_get_current_win()
 
     vim.api.nvim_buf_set_name(bufnr, 'Project Log')
-    vim.api.nvim_buf_set_lines(
-      bufnr,
-      0,
-      -1,
-      true,
-      vim.split(data, '\n', { plain = true, trimempty = false })
-    )
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, vim.split(data, '\n', { plain = true, trimempty = false }))
 
     Util.optset('signcolumn', 'no', 'win', win)
     Util.optset('list', false, 'win', win)

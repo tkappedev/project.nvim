@@ -24,10 +24,7 @@ function M.strip_slash(path, mods)
     mods = { mods, { 'string', 'nil' }, true },
   })
 
-  return M.rstrip(
-    M.is_windows() and '\\' or '/',
-    vim.fn.fnamemodify(path, (mods and mods ~= '') and mods or ':p')
-  )
+  return M.rstrip(M.is_windows() and '\\' or '/', vim.fn.fnamemodify(path, (mods and mods ~= '') and mods or ':p'))
 end
 
 ---@param s string
@@ -90,13 +87,7 @@ function M.same_type_list(list, t)
     list = { list, { 'table' } },
     t = { t, { 'string', 'nil' }, true },
   })
-  if
-    t
-    and not vim.list_contains(
-      { 'boolean', 'userdata', 'string', 'function', 'number', 'thread', 'table' },
-      t
-    )
-  then
+  if t and not vim.list_contains({ 'boolean', 'userdata', 'string', 'function', 'number', 'thread', 'table' }, t) then
     error(('(%s.same_type_list): Invalid type `%s`'):format(t), ERROR)
   end
   if vim.tbl_isempty(list) or not vim.islist(list) then
@@ -127,22 +118,12 @@ function M.optget(option, param, param_value)
   })
   param = param or 'buf'
   if not vim.list_contains({ 'scope', 'ft', 'buf', 'win' }, param) then
-    error(
-      ('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(
-        vim.inspect(param)
-      ),
-      ERROR
-    )
+    error(('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(vim.inspect(param)), ERROR)
   end
   if param == 'scope' then
     param_value = param_value or 'local'
     if not vim.list_contains({ 'global', 'local' }, param_value) then
-      error(
-        ('Bad param value `%s`\nCan only accept `global` or `local`!'):format(
-          vim.inspect(param_value)
-        ),
-        ERROR
-      )
+      error(('Bad param value `%s`\nCan only accept `global` or `local`!'):format(vim.inspect(param_value)), ERROR)
     end
   end
   if param == 'ft' and (not param_value or type(param_value) ~= 'string') then
@@ -150,11 +131,7 @@ function M.optget(option, param, param_value)
   end
   if
     vim.list_contains({ 'win', 'buf' }, param)
-    and not (
-      param_value
-      and type(param_value) == 'number'
-      and M.is_int(param_value, param_value >= 0)
-    )
+    and not (param_value and type(param_value) == 'number' and M.is_int(param_value, param_value >= 0))
   then
     error('Missing/bad value for `win`/`buf` parameter!', ERROR)
   end
@@ -178,23 +155,13 @@ function M.optset(option, value, param, param_value)
   param = param or 'buf'
 
   if not vim.list_contains({ 'scope', 'ft', 'buf', 'win' }, param) then
-    error(
-      ('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(
-        vim.inspect(param)
-      ),
-      ERROR
-    )
+    error(('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(vim.inspect(param)), ERROR)
   end
 
   if param == 'scope' then
     param_value = param_value or 'local'
     if not vim.list_contains({ 'global', 'local' }, param_value) then
-      error(
-        ('Bad param value `%s`\nCan only accept `global` or `local`!'):format(
-          vim.inspect(param_value)
-        ),
-        ERROR
-      )
+      error(('Bad param value `%s`\nCan only accept `global` or `local`!'):format(vim.inspect(param_value)), ERROR)
     end
   end
   if param == 'ft' and (not param_value or type(param_value) ~= 'string') then
@@ -202,11 +169,7 @@ function M.optset(option, value, param, param_value)
   end
   if
     vim.list_contains({ 'win', 'buf' }, param)
-    and not (
-      param_value
-      and type(param_value) == 'number'
-      and M.is_int(param_value, param_value >= 0)
-    )
+    and not (param_value and type(param_value) == 'number' and M.is_int(param_value, param_value >= 0))
   then
     error('Missing/bad value for `win`/`buf` parameter!', ERROR)
   end
@@ -749,9 +712,7 @@ function M.format_per_type(t, data, sep, constraints)
 
   if t == 'string' then
     local res = ('%s`"%s"`'):format(sep, data)
-    if
-      not M.is_type('table', constraints) or constraints and vim.list_contains(constraints, data)
-    then
+    if not M.is_type('table', constraints) or constraints and vim.list_contains(constraints, data) then
       return res
     end
     return res, true
@@ -801,8 +762,7 @@ function M.normalise_path(path)
   M.validate({ path = { path, { 'string' } } })
 
   local normalised_path = path:gsub('\\', '/'):gsub('//', '/')
-  return M.is_windows() and (normalised_path:sub(1, 1):lower() .. normalised_path:sub(2))
-    or normalised_path
+  return M.is_windows() and (normalised_path:sub(1, 1):lower() .. normalised_path:sub(2)) or normalised_path
 end
 
 return M

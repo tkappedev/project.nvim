@@ -31,9 +31,7 @@ end
 
 ---@param entry { name: string, value: string, display: function, index: integer, ordinal: string }
 function M.make_display(entry)
-  Log.debug(
-    ('(%s.make_display): Creating display. Entry values: %s'):format(MODSTR, vim.inspect(entry))
-  )
+  Log.debug(('(%s.make_display): Creating display. Entry values: %s'):format(MODSTR, vim.inspect(entry)))
   return Entry_display.create({
     separator = ' ',
     items = { { width = 30 }, { remaining = true } },

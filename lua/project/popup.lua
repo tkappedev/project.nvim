@@ -40,11 +40,7 @@ local function open_node(proj, only_cd, ran_cd)
     return
   end
 
-  local ls = Core.root_files(
-    Config.options.show_hidden and 'all' or 'all_visible',
-    proj,
-    ran_cd and proj or nil
-  )
+  local ls = Core.root_files(Config.options.show_hidden and 'all' or 'all_visible', proj, ran_cd and proj or nil)
   table.insert(ls, 'Exit')
 
   vim.ui.select(ls, {
@@ -92,9 +88,7 @@ function M.rename_input(project)
 
   local success = true
   vim.ui.input({
-    prompt = ('Input the new name for project %s'):format(
-      History.find_entry('recent', project, 'name')
-    ),
+    prompt = ('Input the new name for project %s'):format(History.find_entry('recent', project, 'name')),
   }, function(input)
     if not input or input == '' then
       success = false
@@ -135,15 +129,12 @@ function M.gen_export_prompt(bang)
       return
     end
 
-    vim.ui.input(
-      { prompt = 'Select your indent level (default: 0):', default = '0' },
-      function(indent)
-        if not indent or indent == '' then
-          return
-        end
-        History.export_history_json(input, indent, bang)
+    vim.ui.input({ prompt = 'Select your indent level (default: 0):', default = '0' }, function(indent)
+      if not indent or indent == '' then
+        return
       end
-    )
+      History.export_history_json(input, indent, bang)
+    end)
   end)
 end
 
@@ -288,36 +279,32 @@ M.delete_menu = M.select.new({
 M.rename_menu = M.select.new({
   callback = function()
     local choices_list = M.rename_menu.choices_list()
-    vim.ui.select(
-      choices_list,
-      { prompt = 'Select a project to rename:' },
-      function(item) ---@param item string
-        if not item or item == 'Exit' then
-          return
-        end
-        if not vim.list_contains(choices_list, item) then
-          vim.notify('Bad selection!', ERROR)
-          return
-        end
-
-        local choice = M.rename_menu.choices()[item]
-        if not (choice and vim.is_callable(choice)) then
-          vim.notify('Bad selection!', ERROR)
-          return
-        end
-
-        vim.ui.input({
-          prompt = ('Input the new name for project %s'):format(
-            Config.options.show_by_name and item or History.find_entry('recent', item, 'name')
-          ),
-        }, function(input)
-          if not input or input == '' then
-            return
-          end
-          choice(input)
-        end)
+    vim.ui.select(choices_list, { prompt = 'Select a project to rename:' }, function(item) ---@param item string
+      if not item or item == 'Exit' then
+        return
       end
-    )
+      if not vim.list_contains(choices_list, item) then
+        vim.notify('Bad selection!', ERROR)
+        return
+      end
+
+      local choice = M.rename_menu.choices()[item]
+      if not (choice and vim.is_callable(choice)) then
+        vim.notify('Bad selection!', ERROR)
+        return
+      end
+
+      vim.ui.input({
+        prompt = ('Input the new name for project %s'):format(
+          Config.options.show_by_name and item or History.find_entry('recent', item, 'name')
+        ),
+      }, function(input)
+        if not input or input == '' then
+          return
+        end
+        choice(input)
+      end)
+    end)
   end,
   choices_list = function()
     local recents ---@type string[]
@@ -342,9 +329,7 @@ M.rename_menu = M.select.new({
       else
         T[proj] = function(name)
           History.rename_project(
-            (Config.options.show_by_name and not History.legacy)
-                and History.find_entry('recent', proj, 'path')
-              or proj,
+            (Config.options.show_by_name and not History.legacy) and History.find_entry('recent', proj, 'path') or proj,
             name
           )
         end

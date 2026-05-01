@@ -98,8 +98,7 @@ function M:project_root()
   local History = require('project.util.history')
   local curr, root = Core.get_current_project(bufnr), Core.get_project_root(bufnr)
   local format = (
-    self.options.format
-    and vim.list_contains({ 'short', 'full', 'full_expanded', 'name' }, self.options.format)
+    self.options.format and vim.list_contains({ 'short', 'full', 'full_expanded', 'name' }, self.options.format)
   )
       and self.options.format
     or 'short'
@@ -108,11 +107,7 @@ function M:project_root()
     return self.options.no_project
   end
 
-  if
-    not in_list({ 'short', 'full', 'full_expanded', 'name' }, format)
-    or not (curr and root)
-    or curr ~= root
-  then
+  if not in_list({ 'short', 'full', 'full_expanded', 'name' }, format) or not (curr and root) or curr ~= root then
     msg = self.options.no_project --[[@as string]]
   elseif format == 'full_expanded' then
     msg = Util.strip_slash(curr)

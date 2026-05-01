@@ -43,10 +43,7 @@ function M.migrate()
     M.is_legacy(M.recent_projects)
   end
 
-  if
-    not vim.tbl_isempty(M.session_projects)
-    and Util.same_type_list(M.session_projects, 'string')
-  then
+  if not vim.tbl_isempty(M.session_projects) and Util.same_type_list(M.session_projects, 'string') then
     for i, v in ipairs(M.session_projects) do
       M.session_projects[i] = {
         path = v,
@@ -123,10 +120,7 @@ function M.rename_project(path, name)
   end
 
   if renamed then
-    vim.notify(
-      ('(%s.rename_project): Renamed from `%s` to `%s`!'):format(MODSTR, old_name, name),
-      INFO
-    )
+    vim.notify(('(%s.rename_project): Renamed from `%s` to `%s`!'):format(MODSTR, old_name, name), INFO)
     Log.debug(('(%s.rename_project): Renamed from `%s` to `%s`!'):format(MODSTR, old_name, name))
 
     M.write_history()
@@ -146,9 +140,7 @@ function M.clear_historyfile(force)
     return
   end
   if not force then
-    if
-      vim.fn.confirm('Are you sure you want to clear the project history?', '&Yes\n&No', 2) ~= 1
-    then
+    if vim.fn.confirm('Are you sure you want to clear the project history?', '&Yes\n&No', 2) ~= 1 then
       Log.info(('(%s.clear_historyfile): Aborting.'):format(MODSTR))
       return
     end
@@ -250,9 +242,7 @@ function M.export_history_json(path, ind, force_name)
 
   local spc = nil ---@type string|nil
   if ind >= 1 then
-    spc = (' '):rep(
-      not vim.list_contains({ math.floor(ind), math.ceil(ind) }, ind) and math.floor(ind) or ind
-    )
+    spc = (' '):rep(not vim.list_contains({ math.floor(ind), math.ceil(ind) }, ind) and math.floor(ind) or ind)
   end
 
   path = Util.strip(' ', path)
@@ -273,23 +263,12 @@ function M.export_history_json(path, ind, force_name)
   local stat = uv.fs_stat(path)
   if stat then
     if stat.type ~= 'file' then
-      Log.error(
-        ('(%s.export_history_json): Target exists and is not a file! `%s`'):format(MODSTR, path)
-      )
-      error(
-        ('(%s.export_history_json): Target exists and is not a file! `%s`'):format(MODSTR, path),
-        ERROR
-      )
+      Log.error(('(%s.export_history_json): Target exists and is not a file! `%s`'):format(MODSTR, path))
+      error(('(%s.export_history_json): Target exists and is not a file! `%s`'):format(MODSTR, path), ERROR)
     end
 
     if stat.size ~= 0 then
-      if
-        vim.fn.confirm(
-          ('File exists! Do you really want to export to it?'):format(path),
-          '&Yes\n&No',
-          2
-        ) ~= 1
-      then
+      if vim.fn.confirm(('File exists! Do you really want to export to it?'):format(path), '&Yes\n&No', 2) ~= 1 then
         Log.info('(%s.delete_project): Aborting project export.')
         return
       end
@@ -496,10 +475,7 @@ function M.deserialize_history(history_data, name_data)
       else
         entry = { path = s, name = name_data[i] } --[[@as ProjectHistoryEntry]]
       end
-      if
-        (Config.options.remove_missing_dirs and Path.exists(s))
-        or not Config.options.remove_missing_dirs
-      then
+      if (Config.options.remove_missing_dirs and Path.exists(s)) or not Config.options.remove_missing_dirs then
         table.insert(projects, entry)
       end
     end
@@ -546,6 +522,7 @@ function M.read_history()
 
   setup_watch()
   if stat.size == 0 and not vim.tbl_isempty(M.session_projects) then
+    Log.warn(('(%s.read_history): History file is empty. Defering call to `%s.write_history()`'):format(MODSTR))
     vim.defer_fn(M.write_history, 10000)
     return
   end
@@ -555,16 +532,10 @@ function M.read_history()
   uv.fs_close(fd)
   if not (ok and data) then
     Log.error(
-      ('(%s.read_history): Could not decode JSON data from history file! (`stat.size = %s`)'):format(
-        MODSTR,
-        stat.size
-      )
+      ('(%s.read_history): Could not decode JSON data from history file! (`stat.size = %s`)'):format(MODSTR, stat.size)
     )
     vim.notify(
-      ('(%s.read_history): Could not decode JSON data from history file! (`stat.size = %s`)'):format(
-        MODSTR,
-        stat.size
-      )
+      ('(%s.read_history): Could not decode JSON data from history file! (`stat.size = %s`)'):format(MODSTR, stat.size)
     )
     return
   end
@@ -756,15 +727,20 @@ function M.is_legacy(data)
     end
   end
 
-  if is_legacy and vim.g.project_migration_notified ~= 1 then
-    vim.g.project_migration_notified = 1
-    vim.notify(
-      [[project.nvim - Your history needs to be migrated to the new spec!
+  if vim.g.project_migration_notified ~= 1 then
+    if is_legacy then
+      vim.g.project_migration_notified = 1
+      Log.warn('History file is legacy!')
+      vim.notify(
+        [[project.nvim - Your history needs to be migrated to the new spec!
 To migrate simply run `:ProjectHistory migrate` in your cmdline.
 
 If you encounter any bugs please raise an issue and it will be dealt with ASAP.]],
-      WARN
-    )
+        WARN
+      )
+    else
+      Log.info('History file is not legacy!')
+    end
   end
 
   M.legacy = is_legacy

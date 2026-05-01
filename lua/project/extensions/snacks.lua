@@ -90,10 +90,7 @@ function M.pick()
         self:close()
         vim.api.nvim_feedkeys('i', 'n', false)
 
-        Popup.rename_input(
-          vim.fn.expand(item.value),
-          History.find_entry('recent', item.value, 'name')
-        )
+        Popup.rename_input(vim.fn.expand(item.value), History.find_entry('recent', item.value, 'name'))
       end,
     },
     confirm = function(self, item)

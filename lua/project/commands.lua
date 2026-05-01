@@ -165,13 +165,9 @@ function M.create_user_commands()
           if Util.dir_exists(input) then
             if
               Core.current_project ~= input
-              and not vim.tbl_contains(
-                session,
-                function(val) ---@param val string|ProjectHistoryEntry
-                  return (History.legacy and val or val.path) == input
-                end,
-                { predicate = true }
-              )
+              and not vim.tbl_contains(session, function(val) ---@param val string|ProjectHistoryEntry
+                return (History.legacy and val or val.path) == input
+              end, { predicate = true })
             then
               Core.set_pwd(input, 'command')
               History.write_history()
@@ -311,11 +307,7 @@ function M.create_user_commands()
           return
         end
 
-        History.export_history_json(
-          ctx.fargs[1],
-          #ctx.fargs == 2 and tonumber(ctx.fargs[2]) or nil,
-          ctx.bang
-        )
+        History.export_history_json(ctx.fargs[1], #ctx.fargs == 2 and tonumber(ctx.fargs[2]) or nil, ctx.bang)
       end,
     },
     {
@@ -399,10 +391,7 @@ function M.create_user_commands()
             vim.notify('(:ProjectHistory rename): Invalid directory!', ERROR)
             return
           elseif not Popup.rename_input(ctx.fargs[i]) then
-            vim.notify(
-              ('(ProjectHistory): Unable to rename project `%s`!'):format(ctx.fargs[i]),
-              ERROR
-            )
+            vim.notify(('(ProjectHistory): Unable to rename project `%s`!'):format(ctx.fargs[i]), ERROR)
             return
           end
         end

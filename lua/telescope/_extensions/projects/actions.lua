@@ -60,10 +60,7 @@ function M.delete_project(prompt_bufnr)
           local name ---@type string
           if History.legacy then
             ---@cast value string
-            name = ('%s/%s'):format(
-              vim.fn.fnamemodify(value, ':h:t'),
-              vim.fn.fnamemodify(value, ':t')
-            )
+            name = ('%s/%s'):format(vim.fn.fnamemodify(value, ':h:t'), vim.fn.fnamemodify(value, ':t'))
           else
             ---@cast value ProjectHistoryEntry
             name = value.name
@@ -161,9 +158,7 @@ function M.rename_project(prompt_bufnr)
   local active_entry = State.get_selected_entry() ---@type Project.ActionEntry
   Actions.close(prompt_bufnr)
 
-  require('project.popup').rename_input(
-    Util.rstrip('/', vim.fn.fnamemodify(active_entry.value, ':p'))
-  )
+  require('project.popup').rename_input(Util.rstrip('/', vim.fn.fnamemodify(active_entry.value, ':p')))
   Log.debug(('(%s.r ename_project): Refreshing prompt `%s`.'):format(MODSTR, prompt_bufnr))
 end
 

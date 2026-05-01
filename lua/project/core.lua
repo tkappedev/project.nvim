@@ -37,6 +37,7 @@ function SWITCH.lsp(bufnr)
 
   local root, lsp_name = M.find_lsp_root(bufnr or vim.api.nvim_get_current_buf())
   if root then
+    Log.debug(('(SWITCH.lsp): found `%s` root at `%s`.'):format(lsp_name, root))
     return true, root, ('"%s" lsp'):format(lsp_name)
   end
   return false
@@ -53,6 +54,7 @@ function SWITCH.pattern(bufnr)
 
   local root, method = M.find_pattern_root(bufnr or vim.api.nvim_get_current_buf())
   if root then
+    Log.debug(('(SWITCH.lsp): found `%s` root at `%s`.'):format(method, root))
     return true, root, method
   end
   return false
@@ -70,8 +72,7 @@ function M.check_oil(bufnr)
   local dir ---@type string|nil
 
   ---SOURCE: https://github.com/cosmicbuffalo/root_swapper.nvim/blob/main/lua/root_swapper.lua
-  dir = (ok and oil and oil.get_current_dir) and oil.get_current_dir(bufnr)
-    or bufname:gsub('^oil://', '')
+  dir = (ok and oil and oil.get_current_dir) and oil.get_current_dir(bufnr) or bufname:gsub('^oil://', '')
 
   if dir then
     dir = Util.strip_slash(dir)
@@ -150,10 +151,7 @@ function M.find_lsp_root(bufnr)
       and client.config.root_dir
     )
     if valid then
-      if
-        Config.options.lsp.use_pattern_matching
-        and Path.root_included(client.config.root_dir) == nil
-      then
+      if Config.options.lsp.use_pattern_matching and Path.root_included(client.config.root_dir) == nil then
         return
       end
       return client.config.root_dir, client.name
@@ -182,8 +180,7 @@ function M.valid_bt(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
-  return Util.buffer_valid(bufnr)
-    and not in_list(Config.options.disable_on.bt, Util.optget('buftype', 'buf', bufnr))
+  return Util.buffer_valid(bufnr) and not in_list(Config.options.disable_on.bt, Util.optget('buftype', 'buf', bufnr))
 end
 
 ---Generates the autocommand for the `LspAttach` event.
@@ -260,14 +257,8 @@ function M.set_pwd(dir, method)
     end
     if old_pos and old_pos ~= 1 then
       table.remove(History.session_projects, old_pos)
-      table.insert(
-        History.session_projects,
-        1,
-        History.legacy and dir or { path = dir, name = name }
-      )
-      Log.debug(
-        ('Moved project %s from %d to the top of session list'):format(unexpand_dir, old_pos)
-      )
+      table.insert(History.session_projects, 1, History.legacy and dir or { path = dir, name = name })
+      Log.debug(('Moved project %s from %d to the top of session list'):format(unexpand_dir, old_pos))
     end
   end
 
@@ -290,10 +281,7 @@ function M.set_pwd(dir, method)
   local msg = ('(%s.set_pwd):'):format(MODSTR)
   if not in_list({ 'global', 'tab', 'win' }, scope_chdir) then
     Log.error(('%s INVALID value for `scope_chdir`: `%s`'):format(msg, vim.inspect(scope_chdir)))
-    vim.notify(
-      ('%s INVALID value for `scope_chdir`: `%s`'):format(msg, vim.inspect(scope_chdir)),
-      ERROR
-    )
+    vim.notify(('%s INVALID value for `scope_chdir`: `%s`'):format(msg, vim.inspect(scope_chdir)), ERROR)
   end
 
   vim.g.project_cwd_log = 0

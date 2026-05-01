@@ -55,9 +55,7 @@ If you wish to disable this warning, set `g:project_disable_win32_warning` to `1
   end
 
   if History.legacy then
-    vim.health.warn(
-      'Your history has not been migrated yet! Please run `:ProjectHistory migrate` to migrate.'
-    )
+    vim.health.warn('Your history has not been migrated yet! Please run `:ProjectHistory migrate` to migrate.')
   else
     vim.health.ok('Your history was migrated successfully! You can set names for your projects.')
   end
@@ -154,9 +152,7 @@ function M.project_check()
       vim.health.info(('%s. `%s`'):format(k, v))
     else
       local index = tostring(k)
-      vim.health.info(
-        ('%d. `%s`\n   %spath: `%s`'):format(index, v.name, (' '):rep(index:len() - 1), v.path)
-      )
+      vim.health.info(('%d. `%s`\n   %spath: `%s`'):format(index, v.name, (' '):rep(index:len() - 1), v.path))
     end
   end
 end
@@ -181,9 +177,7 @@ end
 function M.fzf_lua_check()
   vim.health.start('`fzf-lua` Integration')
   if not Config.options.fzf_lua.enabled then
-    vim.health.warn(
-      '`fzf-lua` integration is disabled. This does not represent an issue necessarily!'
-    )
+    vim.health.warn('`fzf-lua` integration is disabled. This does not represent an issue necessarily!')
     return
   end
 
@@ -219,12 +213,7 @@ and submit an issue if pertinent.
     else
       local index = tostring(i)
       vim.health.info(
-        ('%d. `%s`\n   %spath: `%s`'):format(
-          index,
-          project.name,
-          (' '):rep(index:len() - 1),
-          project.path
-        )
+        ('%d. `%s`\n   %spath: `%s`'):format(index, project.name, (' '):rep(index:len() - 1), project.path)
       )
     end
   end

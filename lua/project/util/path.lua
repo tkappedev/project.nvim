@@ -226,9 +226,7 @@ function M.create_path(path)
   path = path or M.projectpath --[[@as string]]
 
   if not M.exists(path) then
-    require('project.util.log').debug(
-      ('(%s.create_path): Creating directory `%s`.'):format(MODSTR, path)
-    )
+    require('project.util.log').debug(('(%s.create_path): Creating directory `%s`.'):format(MODSTR, path))
     uv.fs_mkdir(path, M.open_mode('755'))
   end
 end
