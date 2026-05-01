@@ -80,13 +80,13 @@ function M.check_oil(bufnr)
 end
 
 ---@overload fun(): last: string|nil
----@overload fun(entry: false): last: string|nil
----@overload fun(entry: true): last: ProjectHistoryEntry|nil
+---@overload fun(full_entry: false): last: string|nil
+---@overload fun(full_entry: true): last: ProjectHistoryEntry|nil
 ---@nodiscard
-function M.get_last_project(entry)
-  Util.validate({ entry = { entry, { 'boolean', 'nil' }, true } })
-  if entry == nil then
-    entry = false
+function M.get_last_project(full_entry)
+  Util.validate({ full_entry = { full_entry, { 'boolean', 'nil' }, true } })
+  if full_entry == nil then
+    full_entry = false
   end
 
   local recent = Util.reverse(History.get_recent_projects())
@@ -101,7 +101,7 @@ function M.get_last_project(entry)
   end
 
   ---@cast res ProjectHistoryEntry
-  return entry and res or res.path
+  return full_entry and res or res.path
 end
 
 ---@overload fun(): history_paths: HistoryPath

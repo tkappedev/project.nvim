@@ -5,6 +5,7 @@ local Core = require('project.core')
 local Config = require('project.config')
 local History = require('project.util.history')
 local Popup = require('project.popup')
+local Log = require('project.util.log')
 local Util = require('project.util')
 
 ---The `project.nvim` module.
@@ -12,19 +13,32 @@ local Util = require('project.util')
 ---@class Project
 local M = {}
 
-M.delete_menu = Popup.delete_menu
 M.delete_project = History.delete_project
 M.get_config = Config.get_config
 M.get_history_paths = Core.get_history_paths
 M.get_last_project = Core.get_last_project
 M.get_project_root = Core.get_project_root
 M.get_recent_projects = History.get_recent_projects
-M.open_menu = Popup.open_menu
-M.recents_menu = Popup.recents_menu
+M.rename_project = History.rename_project
 M.root_files = Core.root_files
 M.run_fzf_lua = require('project.extensions.fzf-lua').run_fzf_lua
-M.session_menu = Popup.session_menu
 M.setup = Config.setup
+
+function M.delete_menu()
+  Popup.delete_menu()
+end
+
+function M.open_menu()
+  Popup.open_menu()
+end
+
+function M.recents_menu()
+  Popup.recents_menu()
+end
+
+function M.session_menu()
+  Popup.session_menu()
+end
 
 ---CREDITS: https://github.com/ahmedkhalf/project.nvim/pull/149
 --- ---
@@ -39,7 +53,6 @@ function M.current_project(refresh)
     refresh = false
   end
 
-  local Log = require('project.util.log')
   if refresh then
     Log.debug(('(%s.current_project): Refreshing current project info.'):format(MODSTR))
     return Core.get_current_project()
@@ -125,6 +138,7 @@ function M.add_root_patterns(patterns)
       and Util.is_type('table', Config.options.patterns)
     )
   then
+    Log.error(('(%s.add_root_patterns): Config values are unaccessible!'):format(MODSTR))
     error(('(%s.add_root_patterns): Config values are unaccessible!'):format(MODSTR), ERROR)
   end
 
@@ -133,13 +147,12 @@ function M.add_root_patterns(patterns)
   if Util.is_type('string', patterns) then
     ---@cast patterns string
     if patterns == '' or vim.list_contains(Config.options.patterns, patterns) then
-      vim.notify(
-        ('(%s.add_root_patterns): Ignoring empty or duplicate pattern: `%s`'):format(
-          MODSTR,
-          patterns
-        ),
-        WARN
+      local msg = ('(%s.add_root_patterns): Ignoring empty or duplicate pattern: `%s`'):format(
+        MODSTR,
+        patterns
       )
+      Log.warn(msg)
+      vim.notify(msg, WARN)
     else
       table.insert(Config.options.patterns, patterns)
     end
@@ -149,6 +162,7 @@ function M.add_root_patterns(patterns)
   ---@cast patterns string[]
   if vim.tbl_isempty(patterns) then
     vim.notify(('(%s.add_root_patterns): Patterns table is empty!'):format(MODSTR), ERROR)
+    Log.error(('(%s.add_root_patterns): Patterns table is empty!'):format(MODSTR))
     return
   end
 

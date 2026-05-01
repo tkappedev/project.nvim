@@ -63,19 +63,19 @@ function M.migrate()
   vim.notify(('(%s.migrate): Migration was successful!'):format(MODSTR), INFO)
 end
 
----@param project string
+---@param path string
 ---@param name string
 ---@return boolean success
-function M.rename_project(project, name)
+function M.rename_project(path, name)
   Util.validate({
-    project = { project, { 'string' } },
+    path = { path, { 'string' } },
     name = { name, { 'string' } },
   })
-  if M.legacy or vim.list_contains({ name, project }, '') then
+  if M.legacy or vim.list_contains({ name, path }, '') then
     return false
   end
 
-  project = Util.strip_slash(project)
+  path = Util.strip_slash(path)
   name = Util.strip(' ', name)
 
   local valid_chars = Util.dedup(
@@ -97,7 +97,7 @@ function M.rename_project(project, name)
   local old_name = ''
   for i, proj in ipairs(M.recent_projects) do
     ---@cast proj ProjectHistoryEntry
-    if proj.path == project then
+    if proj.path == path then
       recent_i = i
       break
     end
@@ -111,7 +111,7 @@ function M.rename_project(project, name)
   local session_i = 0
   for i, proj in ipairs(M.session_projects) do
     ---@cast proj ProjectHistoryEntry
-    if proj.path == project then
+    if proj.path == path then
       session_i = i
       break
     end
