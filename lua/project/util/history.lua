@@ -591,6 +591,7 @@ function M.get_recent_projects(paths_only, tilde)
   end
 
   if removed then
+    Log.info(('(%s.get_recent_projects): An entry has been removed from history. Writing.'):format(MODSTR))
     M.write_history()
   end
 
@@ -637,6 +638,7 @@ function M.write_history(path)
     if data then
       ok, file_history = pcall(vim.json.decode, data) ---@type boolean, string[]|ProjectHistoryEntry[]
       if not ok then
+        Log.error(('(%s.write_history): Unable to decode JSON data!'):format(MODSTR))
         error(('(%s.write_history): Unable to decode JSON data!'):format(MODSTR), ERROR)
       end
     end
@@ -728,8 +730,8 @@ function M.is_legacy(data)
   end
 
   if vim.g.project_migration_notified ~= 1 then
+    vim.g.project_migration_notified = 1
     if is_legacy then
-      vim.g.project_migration_notified = 1
       Log.warn('History file is legacy!')
       vim.notify(
         [[project.nvim - Your history needs to be migrated to the new spec!
@@ -774,7 +776,7 @@ function M.find_entry(search, value, key)
   local tbl = search == 'session' and M.session_projects or M.recent_projects --[[@as ProjectHistoryEntry[]\]]
   for _, v in ipairs(tbl) do
     ---@cast v ProjectHistoryEntry
-    if v.path == Util.strip_slash(value) or v.name == value then
+    if (v.path == Util.strip_slash(value) or v.name == value) and v[key] then
       return v[key]
     end
   end

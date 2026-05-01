@@ -37,7 +37,12 @@ function SWITCH.lsp(bufnr)
 
   local root, lsp_name = M.find_lsp_root(bufnr or vim.api.nvim_get_current_buf())
   if root then
-    Log.debug(('(SWITCH.lsp): found `%s` root at `%s`.'):format(lsp_name, root))
+    if vim.g.project_switch_root ~= root then
+      vim.g.project_switch_root = root
+    end
+    if not vim.list_contains({ (uv.cwd() or vim.fn.getcwd()), vim.g.project_switch_root }, root) then
+      Log.debug(('(SWITCH.lsp): found `%s` root at `%s`.'):format(lsp_name, root))
+    end
     return true, root, ('"%s" lsp'):format(lsp_name)
   end
   return false
@@ -54,7 +59,12 @@ function SWITCH.pattern(bufnr)
 
   local root, method = M.find_pattern_root(bufnr or vim.api.nvim_get_current_buf())
   if root then
-    Log.debug(('(SWITCH.lsp): found `%s` root at `%s`.'):format(method, root))
+    if vim.g.project_switch_root ~= root then
+      vim.g.project_switch_root = root
+    end
+    if not vim.list_contains({ (uv.cwd() or vim.fn.getcwd()), vim.g.project_switch_root }, root) then
+      Log.debug(('(SWITCH.lsp): found `%s` root at `%s`.'):format(method, root))
+    end
     return true, root, method
   end
   return false
@@ -216,7 +226,10 @@ function M.set_pwd(dir, method)
     dir = { dir, { 'string' } },
     method = { method, { 'string' } },
   })
-  dir = vim.fn.expand(dir)
+  dir = Util.strip_slash(dir)
+  if not Path.exists(dir) then
+    return false
+  end
 
   if not Path.verify_owner(dir) then
     Log.warn(('(%s.set_pwd): Project is owned by a different user'):format(MODSTR))
@@ -285,19 +298,13 @@ function M.set_pwd(dir, method)
   end
 
   vim.g.project_cwd_log = 0
-  local ok = false
-  if scope_chdir == 'global' then
-    ok = pcall(vim.api.nvim_set_current_dir, dir)
-    msg = ('%s\nchdir: `%s`:'):format(msg, dir)
-  elseif scope_chdir == 'tab' then
-    ok = pcall(vim.cmd.tchdir, dir)
-    msg = ('%s\ntchdir: `%s`:'):format(msg, dir)
-  elseif scope_chdir == 'win' then
-    ok = pcall(vim.cmd.lchdir, dir)
-    msg = ('%s\nlchdir: `%s`:'):format(msg, dir)
-  end
+  local ok = pcall(
+    scope_chdir == 'global' and vim.api.nvim_set_current_dir
+      or (scope_chdir == 'tab' and vim.cmd.tchdir or (scope_chdir == 'win' and vim.cmd.lchdir)),
+    dir
+  )
 
-  msg = ('%s\nMethod: %s\nStatus: %s'):format(msg, method, (ok and 'SUCCESS' or 'FAILED'))
+  msg = ('%s chdir: `%s`, method: `%s`, status: `%s`'):format(msg, dir, method, (ok and 'SUCCESS' or 'FAILED'))
 
   if ok then
     M.current_project = dir
