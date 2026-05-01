@@ -639,11 +639,8 @@ function M.rstrip(char, str)
   end
 
   ---@cast char string
-  if not vim.startswith(str:reverse(), char) or char:len() > str:len() then
-    return str
-  end
-
-  return M.lstrip(char, str:reverse()):reverse()
+  return (not vim.startswith(str:reverse(), char) or char:len() > str:len()) and str
+    or M.lstrip(char, str:reverse()):reverse()
 end
 
 ---Strip given a leading string (or list of strings) within a string, if any, bidirectionally.
@@ -661,21 +658,20 @@ function M.strip(char, str)
     return str
   end
 
-  if M.is_type('table', char) then
-    ---@cast char string[]
-    if not vim.tbl_isempty(char) then
-      for _, c in ipairs(char) do
-        if c:len() > str:len() then
-          return str
-        end
-        str = M.strip(c, str)
-      end
-    end
-    return str
+  if M.is_type('string', char) then
+    return M.rstrip(char, M.lstrip(char, str))
   end
 
-  ---@cast char string
-  return M.rstrip(char, M.lstrip(char, str))
+  ---@cast char string[]
+  if not vim.tbl_isempty(char) then
+    for _, c in ipairs(char) do
+      if c:len() > str:len() then
+        return str
+      end
+      str = M.strip(c, str)
+    end
+  end
+  return str
 end
 
 ---Get rid of all duplicates in input table.
@@ -685,7 +681,7 @@ end
 ---If the data passed to the function is not a table,
 ---an error will be raised.
 --- ---
----@generic T
+---@generic T: table
 ---@param T T
 ---@param key? string|integer
 ---@return T NT
@@ -782,8 +778,11 @@ function M.format_per_type(t, data, sep, constraints)
   for k, v in pairs(data) do
     k = M.is_type('number', k) and ('[%s]'):format(tostring(k)) or k
     msg = ('%s\n%s`%s`: '):format(msg, sep, k)
-    msg = M.is_type('string', v) and ('%s`"%s"`'):format(msg, v)
-      or ('%s%s'):format(msg, M.format_per_type(type(v), v, sep))
+    if M.is_type('string', v) then
+      msg = ('%s`"%s"`'):format(msg, v)
+    else
+      msg = ('%s%s'):format(msg, M.format_per_type(type(v), v, sep))
+    end
   end
   return msg
 end
@@ -802,7 +801,7 @@ function M.normalise_path(path)
   M.validate({ path = { path, { 'string' } } })
 
   local normalised_path = path:gsub('\\', '/'):gsub('//', '/')
-  return M.is_windows() and normalised_path:sub(1, 1):lower() .. normalised_path:sub(2)
+  return M.is_windows() and (normalised_path:sub(1, 1):lower() .. normalised_path:sub(2))
     or normalised_path
 end
 
