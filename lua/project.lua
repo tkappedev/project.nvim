@@ -48,7 +48,7 @@ end
 ---@return string|nil last
 ---@nodiscard
 function M.current_project(refresh)
-  require('project.util').validate({ refresh = { refresh, { 'boolean', 'nil' }, true } })
+  Util.validate({ refresh = { refresh, { 'boolean', 'nil' }, true } })
   if refresh == nil then
     refresh = false
   end
@@ -68,14 +68,13 @@ end
 --- ---
 ---@param patterns string[]|string The string or list of strings containing the matching pattern(s).
 function M.remove_root_patterns(patterns)
+  Util.validate({ patterns = { patterns, { 'string', 'table' } } })
   if vim.g.project_setup ~= 1 then
     error(('(%s.remove_root_patterns): `project.nvim` is not setup!'):format(MODSTR), ERROR)
   end
   if not (Config.options and Config.options.patterns and Util.is_type('table', Config.options.patterns)) then
     error(('(%s.remove_root_patterns): Config values are unaccessible!'):format(MODSTR), ERROR)
   end
-
-  Util.validate({ patterns = { patterns, { 'table', 'string' } } })
 
   if Util.is_type('table', patterns) then
     ---@cast patterns string[]
@@ -116,6 +115,7 @@ end
 --- ---
 ---@param patterns string[]|string The string or list of strings containing the new pattern(s).
 function M.add_root_patterns(patterns)
+  Util.validate({ patterns = { patterns, { 'string', 'table' } } })
   if vim.g.project_setup ~= 1 then
     error(('(%s.add_root_patterns): `project.nvim` is not setup!'):format(MODSTR), ERROR)
   end
@@ -123,8 +123,6 @@ function M.add_root_patterns(patterns)
     Log.error(('(%s.add_root_patterns): Config values are unaccessible!'):format(MODSTR))
     error(('(%s.add_root_patterns): Config values are unaccessible!'):format(MODSTR), ERROR)
   end
-
-  Util.validate({ patterns = { patterns, { 'table', 'string' } } })
 
   if Util.is_type('string', patterns) then
     ---@cast patterns string

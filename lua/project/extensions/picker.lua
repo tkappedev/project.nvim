@@ -1,5 +1,6 @@
-local Util = require('project.util')
 local Commands = require('project.commands')
+local Log = require('project.util.log')
+local Util = require('project.util')
 
 ---@class Project.Extensions.Picker
 local M = {}
@@ -8,6 +9,7 @@ M.source = require('picker.sources.projects')
 
 function M.setup()
   if not Util.mod_exists('picker') then
+    Log.error('picker.nvim is not installed!')
     vim.notify('picker.nvim is not installed!', vim.log.levels.ERROR)
     return
   end
@@ -26,7 +28,7 @@ function M.setup()
         require('picker.sources.files').set({ cmd = cmd })
         require('picker.windows').open(M.source)
 
-        require('project.util.log').debug('(:ProectPicker): Opening `picker.nvim` picker.')
+        Log.debug('(:ProectPicker): Opening `picker.nvim` picker.')
       end,
       bang = true,
     },

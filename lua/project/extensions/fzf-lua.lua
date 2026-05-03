@@ -1,8 +1,8 @@
 local MODSTR = 'project.extensions.fzf-lua'
 local ERROR = vim.log.levels.ERROR
-local Log = require('project.util.log')
 local Config = require('project.config')
 local History = require('project.util.history')
+local Log = require('project.util.log')
 local Util = require('project.util')
 
 ---@class Project.Extensions.FzfLua

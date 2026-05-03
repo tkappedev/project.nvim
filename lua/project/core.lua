@@ -192,31 +192,6 @@ function M.valid_bt(bufnr)
   return Util.buffer_valid(bufnr) and not in_list(Config.options.disable_on.bt, Util.optget('buftype', 'buf', bufnr))
 end
 
----Generates the autocommand for the `LspAttach` event.
----
----**_An `augroup` ID is mandatory!_**
---- ---
----@param group integer
-function M.gen_lsp_autocmd(group)
-  Util.validate({ group = { group, { 'number' } } })
-  if not Util.is_int(group) then
-    error(('Parameter group is not an integer `%s`'):format(group))
-  end
-
-  if vim.g.project_lspattach == 1 then
-    return
-  end
-
-  vim.api.nvim_create_autocmd('LspAttach', {
-    group = group,
-    nested = true,
-    callback = function(ev)
-      M.on_buf_enter(ev.buf)
-    end,
-  })
-  vim.g.project_lspattach = 1
-end
-
 ---@param dir string
 ---@param method string
 ---@return boolean success
@@ -546,9 +521,17 @@ function M.setup()
           M.on_buf_enter(ev.buf)
         end,
       })
+      vim.g.project_pattern_attach = 1
     end
     if in_list(Config.detection_methods, 'lsp') then
-      M.gen_lsp_autocmd(group)
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = group,
+        nested = true,
+        callback = function(ev)
+          M.on_buf_enter(ev.buf)
+        end,
+      })
+      vim.g.project_lsp_attach = 1
     end
   end
   History.read_history()

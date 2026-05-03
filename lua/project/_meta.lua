@@ -530,6 +530,7 @@ local project_paths = { ---@diagnostic disable-line:unused-local
 ---@field silent_chdir boolean
 ---@field snacks ProjectDefaults.Snacks
 ---@field telescope ProjectDefaults.Telescope
+---@field __index ProjectDefaults
 local D = {}
 
 function D:expand_excluded() end

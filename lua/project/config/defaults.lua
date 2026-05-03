@@ -101,6 +101,8 @@ local DEFAULTS = { ---@type ProjectDefaults
   },
 }
 
+DEFAULTS.__index = DEFAULTS
+
 ---Checks the `historysize` option.
 ---
 ---If the option is not valid, a warning will be raised and
@@ -383,10 +385,7 @@ end
 function DEFAULTS.new(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  local obj = setmetatable(vim.tbl_deep_extend('keep', opts or {}, DEFAULTS), { --[[@as ProjectDefaults]]
-    __index = DEFAULTS,
-  })
-  return obj
+  return setmetatable(opts or {}, DEFAULTS)
 end
 
 return DEFAULTS

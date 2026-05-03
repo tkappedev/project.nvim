@@ -2,8 +2,12 @@
 
 local uv = vim.uv or vim.loop
 local MODSTR = 'project.extensions.snacks'
-local Util = require('project.util')
+local Config = require('project.config')
+local Core = require('project.core')
+local History = require('project.util.history')
 local Log = require('project.util.log')
+local Popup = require('project.popup')
+local Util = require('project.util')
 
 ---@class Project.Extensions.Snacks
 ---@field config ProjectSnacksConfig
@@ -21,8 +25,6 @@ M.config = {
 
 ---@return snacks.picker.finder.Item[] items
 function M.gen_items()
-  local History = require('project.util.history')
-  local Config = require('project.config')
   local recents = require('project').get_recent_projects(nil, true)
   local items = {} ---@type snacks.picker.finder.Item[]
   if M.config.sort and M.config.sort == 'newest' then
@@ -72,9 +74,6 @@ local function format_session_item(item)
 end
 
 function M.pick()
-  local History = require('project.util.history')
-  local Popup = require('project.popup')
-  local Core = require('project.core')
   return require('snacks').picker.pick({
     actions = {
       chdir_only = function(self, item)
@@ -95,20 +94,22 @@ function M.pick()
     },
     confirm = function(self, item)
       self:close()
-      if require('project.core').set_pwd(vim.fn.expand(item.value), 'snacks') then
-        Log.debug(('(%s.pick): Opening Snacks picker'):format(MODSTR))
-        require('snacks').picker.files({
-          cwd = uv.cwd() or vim.fn.getcwd(),
-          show_empty = true,
-          hidden = M.config.hidden,
-          finder = 'files',
-          format = 'file',
-          supports_live = true,
-          auto_close = true,
-          dirs = { uv.cwd() or vim.fn.getcwd() },
-          enter = true,
-        })
+      if not Core.set_pwd(vim.fn.expand(item.value), 'snacks') then
+        return
       end
+
+      Log.debug(('(%s.pick): Opening Snacks picker'):format(MODSTR))
+      require('snacks').picker.files({
+        cwd = uv.cwd() or vim.fn.getcwd(),
+        show_empty = true,
+        hidden = M.config.hidden,
+        finder = 'files',
+        format = 'file',
+        supports_live = true,
+        auto_close = true,
+        dirs = { uv.cwd() or vim.fn.getcwd() },
+        enter = true,
+      })
     end,
     enter = true,
     format = format_session_item,
