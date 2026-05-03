@@ -177,8 +177,7 @@ function M.find_pattern_root(bufnr)
   Util.validate({ bufnr = { bufnr, { 'number', 'nil' }, true } })
   bufnr = (bufnr and Util.is_int(bufnr, bufnr >= 0)) and bufnr or vim.api.nvim_get_current_buf()
 
-  local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local dir = M.check_oil(bufnr) or bufname
+  local dir = M.check_oil(bufnr) or vim.api.nvim_buf_get_name(bufnr)
   dir = vim.fn.isdirectory(dir) == 1 and dir or Util.strip_slash(dir, ':p:h') ---@type string
   return Path.root_included(Util.is_windows() and dir:gsub('\\', '/') or dir)
 end
@@ -547,7 +546,8 @@ function M.setup()
           M.on_buf_enter(ev.buf)
         end,
       })
-    elseif in_list(Config.detection_methods, 'lsp') then
+    end
+    if in_list(Config.detection_methods, 'lsp') then
       M.gen_lsp_autocmd(group)
     end
   end
