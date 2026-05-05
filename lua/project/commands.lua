@@ -4,12 +4,12 @@ local WARN = vim.log.levels.WARN
 local ERROR = vim.log.levels.ERROR
 local INFO = vim.log.levels.INFO
 local uv = vim.uv or vim.loop
-local Util = require('project.util')
-local Popup = require('project.popup')
-local History = require('project.util.history')
-local Core = require('project.core')
-local Log = require('project.util.log')
 local Config = require('project.config')
+local Core = require('project.core')
+local History = require('project.util.history')
+local Log = require('project.util.log')
+local Popup = require('project.popup')
+local Util = require('project.util')
 
 ---@param line string
 ---@return string[] items
@@ -61,13 +61,12 @@ function M.new(specs)
       complete = { spec.complete, { 'string', 'function', 'nil' }, true },
     })
 
-    local bang = false ---@type boolean
-    if spec.bang ~= nil then
-      bang = spec.bang
+    if spec.bang == nil then
+      spec.bang = false
     end
     local name = spec.name
-    local T = { name = name, desc = spec.desc, bang = bang }
-    local opts = { desc = spec.desc, bang = bang }
+    local T = { name = name, desc = spec.desc, bang = spec.bang }
+    local opts = { desc = spec.desc, bang = spec.bang }
     if spec.nargs then
       T.nargs = spec.nargs --[[@as string|integer]]
       opts.nargs = spec.nargs --[[@as string|integer]]
@@ -130,7 +129,6 @@ function M.create_user_commands()
             end
           end
           table.sort(res)
-
           return res
         end
         return {}
@@ -158,14 +156,13 @@ function M.create_user_commands()
           return
         end
 
-        local session = History.session_projects
         local msg = ''
         for _, input in ipairs(ctx.fargs) do
           input = Util.strip_slash(input)
           if Util.dir_exists(input) then
             if
               Core.current_project ~= input
-              and not vim.tbl_contains(session, function(val) ---@param val string|ProjectHistoryEntry
+              and not vim.tbl_contains(History.session_projects, function(val) ---@param val string|ProjectHistoryEntry
                 return (History.legacy and val or val.path) == input
               end, { predicate = true })
             then

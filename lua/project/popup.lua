@@ -392,7 +392,9 @@ M.recents_menu = M.select.new({
   choices = function()
     local choices = {} ---@type table<string, fun(proj: string, only_cd: boolean, ran_cd: boolean)>
     for _, s in ipairs(M.recents_menu.choices_list()) do
-      choices[s] = s ~= 'Exit' and open_node or function() end
+      choices[s] = s ~= 'Exit' and open_node or function()
+        vim.g.project_nvim_cwd = ''
+      end
     end
     return choices
   end,
@@ -559,7 +561,9 @@ M.session_menu = M.select.new({
       return choices
     end
     for _, proj in ipairs(sessions) do
-      choices[proj] = open_node
+      choices[proj] = proj ~= 'Exit' and open_node or function()
+        vim.g.project_nvim_cwd = ''
+      end
     end
     return choices
   end,
