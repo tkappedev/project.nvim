@@ -70,33 +70,15 @@ function M.options_check()
     return
   end
   table.sort(Options)
-  local exceptions = {
-    'expand_excluded',
-    'fzf_lua',
-    'gen_methods',
-    'new',
-    'telescope',
-    'verify',
-    'verify_datapath',
-    'verify_fzf_lua',
-    'verify_history',
-    'verify_lists',
-    'verify_logging',
-    'verify_lsp',
-    'verify_owners',
-    'verify_scope_chdir',
-  }
   for k, v in pairs(Options) do
-    if not vim.list_contains(exceptions, k) then
-      local constraints = nil ---@type string[]|nil
-      if k == 'scope_chdir' then
-        constraints = { 'global', 'tab', 'win' }
-      end
-
-      local str, warning = Util.format_per_type(type(v), v, nil, constraints)
-      local func = warning and vim.health.warn or vim.health.ok
-      func((' - `%s`: %s'):format(k, str))
+    local constraints = nil ---@type string[]|nil
+    if k == 'scope_chdir' then
+      constraints = { 'global', 'tab', 'win' }
     end
+
+    local str, warning = Util.format_per_type(type(v), v, nil, constraints)
+    local func = warning and vim.health.warn or vim.health.ok
+    func((' - `%s`: %s'):format(k, str))
   end
 end
 
